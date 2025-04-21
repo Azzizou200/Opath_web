@@ -1,5 +1,8 @@
 import { useState } from "react";
+import CustomColor from "../constant/color";
 import {
+  PieChart,
+  Pie,
   BarChart,
   LineChart,
   Bar,
@@ -10,6 +13,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import {
   Calendar,
@@ -18,7 +22,26 @@ import {
   Globe,
   TrendingUp,
   ArrowUpRight,
+  Square,
+  ArrowBigDown,
+  ArrowBigUp,
 } from "lucide-react";
+
+const COLORS = [CustomColor.success, CustomColor.fail, CustomColor.warning];
+const data02 = [
+  {
+    name: "Group A",
+    value: 2400,
+  },
+  {
+    name: "Group B",
+    value: 4567,
+  },
+  {
+    name: "Group C",
+    value: 1398,
+  },
+];
 
 // Sample data for charts
 const bookingData = [
@@ -38,7 +61,19 @@ const destinationData = [
   { name: "New York", bookings: 120 },
   { name: "Rome", bookings: 90 },
 ];
-
+export const Persentage = ({ value }: { value: number }) => {
+  return value < 0 ? (
+    <div className="flex items-center ">
+      <ArrowBigDown size={18} fill="red" color="red" />
+      <p>{value.toString() + "%"}</p>
+    </div>
+  ) : (
+    <div className="flex items-center">
+      <ArrowBigUp size={18} fill="green" color="green" />
+      <p>{value.toString() + "%"}</p>
+    </div>
+  );
+};
 const Dashboard: React.FC = () => {
   const [timeRange, setTimeRange] = useState("month");
 
@@ -75,64 +110,47 @@ const Dashboard: React.FC = () => {
   ];
 
   // Upcoming tours
-  const upcomingTours = [
-    {
-      id: 1,
-      name: "European Summer Adventure",
-      departureDate: "2023-07-15",
-      spots: 4,
-      price: "$2,499",
-    },
-    {
-      id: 2,
-      name: "Tropical Bali Retreat",
-      departureDate: "2023-07-22",
-      spots: 2,
-      price: "$1,899",
-    },
-    {
-      id: 3,
-      name: "Japanese Culture Tour",
-      departureDate: "2023-08-05",
-      spots: 8,
-      price: "$3,299",
-    },
-  ];
-
+  interface bookings {
+    id: string;
+    customer: string;
+    duration: string;
+    distance: string;
+    change: number;
+  }
   // Recent bookings
-  const recentBookings = [
+  const recentBookings: bookings[] = [
     {
       id: "BK-1893",
       customer: "Emma Wilson",
-      destination: "Paris",
-      date: "2023-06-28",
-      amount: "$1,350",
+      duration: "70h",
+      distance: "800km",
+      change: 10,
     },
     {
       id: "BK-1892",
       customer: "Michael Chen",
-      destination: "Bali",
-      date: "2023-06-27",
-      amount: "$2,180",
+      duration: "70h",
+      distance: "800km",
+      change: 10,
     },
     {
       id: "BK-1891",
       customer: "Sophie Martin",
-      destination: "Tokyo",
-      date: "2023-06-27",
-      amount: "$2,950",
+      duration: "70h",
+      distance: "800km",
+      change: 10,
     },
     {
       id: "BK-1890",
       customer: "James Miller",
-      destination: "Rome",
-      date: "2023-06-26",
-      amount: "$1,650",
+      duration: "70h",
+      distance: "800km",
+      change: 10,
     },
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Travel Agency Dashboard</h1>
         <div className="flex space-x-2">
@@ -245,41 +263,71 @@ const Dashboard: React.FC = () => {
       {/* Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Upcoming Tours */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+        <div className="flex flex-col bg-white p-6 rounded-lg shadow-sm border border-gray-100   ">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Upcoming Tours</h2>
+            <h2 className="text-lg font-semibold">Bus overview</h2>
             <button className="text-blue-600 text-sm font-medium">
               View All
             </button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-gray-500 text-sm border-b">
-                  <th className="pb-3 font-medium">Tour</th>
-                  <th className="pb-3 font-medium">Departure</th>
-                  <th className="pb-3 font-medium">Available Spots</th>
-                  <th className="pb-3 font-medium">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {upcomingTours.map((tour) => (
-                  <tr key={tour.id} className="border-b border-gray-100">
-                    <td className="py-4 text-sm font-medium">{tour.name}</td>
-                    <td className="py-4 text-sm">{tour.departureDate}</td>
-                    <td className="py-4 text-sm">{tour.spots}</td>
-                    <td className="py-4 text-sm">{tour.price}</td>
-                  </tr>
+          <div className="flex   justify-center items-center gap-4 ">
+            <PieChart width={260} height={250}>
+              <Pie
+                data={data02}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                cornerRadius={10}
+                fill="#82ca9d"
+                label
+              >
+                {data02.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
-              </tbody>
-            </table>
+              </Pie>
+            </PieChart>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-1">
+                <Square
+                  color="green"
+                  fill="green"
+                  className="mt-0.5"
+                  size={12}
+                ></Square>
+                <p>Buses Available</p>
+              </li>
+              <li className="flex items-center gap-1">
+                <Square
+                  color="green"
+                  fill="green"
+                  size={12}
+                  className="mt-0.5"
+                ></Square>
+                <p>Buses Available</p>
+              </li>
+              <li className="flex items-center gap-1">
+                <Square
+                  color="green"
+                  className="mt-0.5"
+                  fill="green"
+                  size={12}
+                ></Square>
+                <p>Buses Available</p>
+              </li>
+            </ul>
           </div>
         </div>
 
         {/* Recent Bookings */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Bookings</h2>
+            <h2 className="text-lg font-semibold">Top proforming drivers</h2>
             <button className="text-blue-600 text-sm font-medium">
               View All
             </button>
@@ -289,10 +337,10 @@ const Dashboard: React.FC = () => {
               <thead>
                 <tr className="text-left text-gray-500 text-sm border-b">
                   <th className="pb-3 font-medium">ID</th>
-                  <th className="pb-3 font-medium">Customer</th>
-                  <th className="pb-3 font-medium">Destination</th>
-                  <th className="pb-3 font-medium">Date</th>
-                  <th className="pb-3 font-medium">Amount</th>
+                  <th className="pb-3 font-medium">Driver</th>
+                  <th className="pb-3 font-medium">Time</th>
+                  <th className="pb-3 font-medium">Distance</th>
+                  <th className="pb-3 font-medium">Change</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,9 +348,11 @@ const Dashboard: React.FC = () => {
                   <tr key={booking.id} className="border-b border-gray-100">
                     <td className="py-4 text-sm font-medium">{booking.id}</td>
                     <td className="py-4 text-sm">{booking.customer}</td>
-                    <td className="py-4 text-sm">{booking.destination}</td>
-                    <td className="py-4 text-sm">{booking.date}</td>
-                    <td className="py-4 text-sm">{booking.amount}</td>
+                    <td className="py-4 text-sm">{booking.duration}</td>
+                    <td className="py-4 text-sm">{booking.distance}</td>
+                    <td className="py-4 text-sm">
+                      <Persentage value={booking.change} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

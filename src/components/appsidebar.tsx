@@ -1,4 +1,4 @@
-import { Home, Inbox, Settings, User, Info } from "lucide-react";
+import { Inbox, User, CircleDollarSign, BusFront, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import {
@@ -22,43 +22,47 @@ const data = {
 // Menu items.
 const items = [
   {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
-  {
     title: "Dashboard",
     url: "/dashboard",
     icon: Inbox,
   },
   {
-    title: "Profile",
+    title: "Buses",
+    url: "/",
+    icon: BusFront,
+  },
+  {
+    title: "Drivers",
     url: "/profile",
     icon: User,
   },
   {
-    title: "Settings",
+    title: "Trips",
     url: "/settings",
-    icon: Settings,
+    icon: Link2,
   },
   {
-    title: "About",
+    title: "Revenue",
     url: "/about",
-    icon: Info,
+    icon: CircleDollarSign,
   },
 ];
 
 export function AppSidebar() {
   return (
-    <Sidebar variant="sidebar" collapsible="offcanvas">
+    <Sidebar variant="sidebar" collapsible="offcanvas" className="w-60">
       <SidebarContent>
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <div className="flex flex-col  gap-2 p-2">
-                <Link className="flex  gap-2" to="/">
-                  <img src={logo} alt="logo" className="w-10 h-10" />
-                  <h1 className="text-3xl font-bold">Opath</h1>
+              <div className="flex flex-col items-center gap-2 p-2">
+                <Link className="flex items-center gap-2 mr-10" to="/">
+                  <img
+                    src={logo}
+                    alt="logo"
+                    className="w-10 h-10 select-none"
+                  />
+                  <h1 className="text-4xl font-bold select-none">Opath</h1>
                 </Link>
               </div>
             </SidebarMenuItem>
