@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Payment, columns } from "../components/columns";
+import {
+  BusStatus,
+  BusStats,
+  columnsBusStats,
+  columnsBusStatus,
+} from "../components/columns";
 import { DataTable } from "../components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { DiamondPlus } from "lucide-react";
@@ -27,152 +32,88 @@ import {
 } from "@/components/ui/carousel";
 
 export default function DemoPage() {
-  const [data, setData] = useState<Payment[]>([]);
+  const [data, setData] = useState<BusStatus[]>([]);
+  const [data02, setData02] = useState<BusStats[]>([]);
 
   useEffect(() => {
     async function fetchData() {
-      const result: Payment[] = [
+      const result: BusStatus[] = [
         {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
+          id: "BUS-001",
+          status: "maintenance",
+          driverName: 101,
+          capacity: 50,
         },
         {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
+          id: "BUS-002",
+          status: "stopped",
+          driverName: 102,
+          capacity: 45,
         },
         {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
+          id: "BUS-003",
+          status: "working",
+          driverName: 103,
+          capacity: 60,
         },
         {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
+          id: "BUS-004",
+          status: "stopped",
+          driverName: null,
+          capacity: 40,
         },
         {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
-        },
-        {
-          id: "728ed52f",
-          amount: 100,
-          status: "pending",
-          email: "m@example.com",
+          id: "BUS-005",
+          status: "working",
+          driverName: 104,
+          capacity: 55,
         },
         // ...
       ];
       setData(result);
+      const result02: BusStats[] = [
+        {
+          driverName: "John Doe",
+          phoneNumber: "555-1234",
+          busId: "BUS001",
+          currentRoute: "A",
+          totalTrips: 120,
+          totalHours: 340,
+        },
+        {
+          driverName: "Alice Smith",
+          phoneNumber: "555-5678",
+          busId: "BUS002",
+          currentRoute: "B",
+          totalTrips: 98,
+          totalHours: 280,
+        },
+        {
+          driverName: null,
+          phoneNumber: null,
+          busId: "BUS003",
+          currentRoute: null,
+          totalTrips: 75,
+          totalHours: 190,
+        },
+        {
+          driverName: "Michael Brown",
+          phoneNumber: null,
+          busId: "BUS004",
+          currentRoute: "C",
+          totalTrips: 134,
+          totalHours: 400,
+        },
+        {
+          driverName: "Sophie Lee",
+          phoneNumber: "555-9999",
+          busId: "BUS005",
+          currentRoute: null,
+          totalTrips: 65,
+          totalHours: 150,
+        },
+      ];
+      setData02(result02);
     }
 
     fetchData();
@@ -182,8 +123,7 @@ export default function DemoPage() {
   return (
     <div className="container mx-auto py-5 pr-10">
       <div className="flex flex-row justify-between mb-4">
-        <h1 className="text-2xl font-bold">Bus Management</h1>
-
+        <h1 className="text-3xl font-bold mb-5">Bus Management</h1>
         <Sheet>
           <SheetTrigger asChild>
             <Button className="">
@@ -261,7 +201,13 @@ export default function DemoPage() {
           </SheetContent>
         </Sheet>
       </div>
-      <DataTable columns={columns} data={data} />
+
+      <h1 className="text-2xl font-bold mb-2">Buses Status</h1>
+
+      <DataTable columns={columnsBusStatus} data={data} />
+      <h1 className="text-2xl font-bold mb-2 mt-10">Buses Current Stats</h1>
+
+      <DataTable columns={columnsBusStats} data={data02} />
     </div>
   );
 }

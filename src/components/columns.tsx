@@ -8,46 +8,41 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type Payment = {
+export type BusStatus = {
   id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
+  status: "maintenance" | "working" | "stopped";
+  driverName: number | null;
+  capacity: number;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+export const columnsBusStatus: ColumnDef<BusStatus>[] = [
   {
-    accessorKey: "email",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Email" />;
-    },
-    cell: ({ row }) => {
-      return (
-        <div className="text-sm text-gray-800">{row.getValue("email")}</div>
-      );
-    },
-    enableSorting: true,
-    enableColumnFilter: true,
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Bus ID" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm text-gray-800">{row.getValue("id")}</div>
+    ),
   },
   {
     accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Status" />;
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
     cell: ({ row }) => {
-      const status = row.getValue("status") as string;
+      const status = row.getValue("status") as BusStatus["status"];
       const statusColor =
         {
-          pending: "bg-yellow-100 text-yellow-800",
-          completed: "bg-green-100 text-green-800",
-          failed: "bg-red-100 text-red-800",
+          maintenance: "bg-yellow-100 text-yellow-800",
+
+          working: "bg-green-100 text-green-800",
+          stopped: "bg-red-100 text-red-800",
         }[status] || "bg-gray-100 text-gray-800";
 
       return (
@@ -62,33 +57,31 @@ export const columns: ColumnDef<Payment>[] = [
     enableColumnFilter: true,
   },
   {
-    accessorKey: "amount",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader
-          column={column}
-          title="amount"
-          className="justify-center"
-        />
-      );
-    },
+    accessorKey: "driverName",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Driver ID" />
+    ),
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-
+      const driverId = row.getValue("driverName");
       return (
-        <div className="mr-5 flex justify-center font-medium">{formatted}</div>
+        <div className="text-sm text-gray-700">
+          {driverId !== null ? "driverId" : "—"}
+        </div>
       );
     },
   },
   {
+    accessorKey: "capacity",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Capacity" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("capacity")}</div>
+    ),
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
-      const payment = row.original;
-
       return (
         <div className="flex flex-row justify-end">
           <DropdownMenu>
@@ -102,19 +95,105 @@ export const columns: ColumnDef<Payment>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(payment.id)}
-              >
-                Copy payment ID
+              {row.getValue("driverName") ? (
+                <>
+                  <DropdownMenuItem className="text-blue-600">
+                    Replace Driver
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500">
+                    Remove Driver
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem className="text-blue-600">
+                  Add Driver
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem className="text-red-500">
+                Remove Bus
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>View customer</DropdownMenuItem>
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       );
+    },
+  },
+];
+export type BusStats = {
+  driverName: string | null;
+  phoneNumber: string | null;
+  busId: string;
+  currentRoute: string | null; // "A", "B", "C", etc.
+  totalTrips: number;
+  totalHours: number;
+};
+
+export const columnsBusStats: ColumnDef<BusStats>[] = [
+  {
+    accessorKey: "busId",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Bus ID" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("busId")}</div>
+    ),
+  },
+  {
+    accessorKey: "driverName",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Driver Name" />
+    ),
+    cell: ({ row }) => {
+      const driver = row.getValue("driverName");
+      return <div className="text-sm">{driver ?? "—"}</div>;
+    },
+  },
+  {
+    accessorKey: "phoneNumber",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone Number" />
+    ),
+    cell: ({ row }) => {
+      const phone = row.getValue("phoneNumber");
+      return <div className="text-sm text-gray-700">{phone ?? "—"}</div>;
+    },
+  },
+  {
+    accessorKey: "currentRoute",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Current Route" />
+    ),
+    cell: ({ row }) => {
+      const route = row.getValue("currentRoute");
+      return (
+        <div className="text-sm font-medium">
+          {route ? (
+            <div className="text-sm font-medium">{route}</div>
+          ) : (
+            <div className="text-sm text-gray-400">Unassigned</div>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "totalTrips",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Total Trips" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-semibold">{row.getValue("totalTrips")}</div>
+    ),
+  },
+  {
+    accessorKey: "totalHours",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Total Hours" />
+    ),
+    cell: ({ row }) => {
+      const hours = row.getValue("totalHours") as number;
+      return <div className="text-sm">{hours} hrs</div>;
     },
   },
 ];
