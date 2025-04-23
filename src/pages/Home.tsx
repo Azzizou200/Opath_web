@@ -121,8 +121,8 @@ export default function DemoPage() {
   const [selected, setSelected] = useState(1);
 
   return (
-    <div className="container mx-auto py-5 pr-10">
-      <div className="flex flex-row justify-between mb-4">
+    <div className="container mx-auto py-5 px-10">
+      <div className="flex flex-row justify-between mb-4 w-auto  ">
         <h1 className="text-3xl font-bold mb-5">Bus Management</h1>
         <Sheet>
           <SheetTrigger asChild>

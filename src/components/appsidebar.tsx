@@ -50,7 +50,7 @@ const items = [
 
 export function AppSidebar() {
   return (
-    <Sidebar variant="sidebar" collapsible="offcanvas" className="w-60">
+    <Sidebar variant="sidebar" collapsible="offcanvas" className="w-60 ">
       <SidebarContent>
         <SidebarHeader>
           <SidebarMenu>
