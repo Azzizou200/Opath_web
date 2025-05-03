@@ -30,6 +30,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { supabase } from "@/lib/supabase";
 
 export default function DemoPage() {
   const [data, setData] = useState<BusStatus[]>([]);
@@ -37,91 +38,78 @@ export default function DemoPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const result: BusStatus[] = [
-        {
-          id: "BUS-001",
-          status: "maintenance",
-          driverName: 101,
-          capacity: 50,
-        },
-        {
-          id: "BUS-002",
-          status: "stopped",
-          driverName: 102,
-          capacity: 45,
-        },
-        {
-          id: "BUS-003",
-          status: "working",
-          driverName: 103,
-          capacity: 60,
-        },
-        {
-          id: "BUS-004",
-          status: "stopped",
-          driverName: null,
-          capacity: 40,
-        },
-        {
-          id: "BUS-005",
-          status: "working",
-          driverName: 104,
-          capacity: 55,
-        },
-        // ...
-      ];
-      setData(result);
-      const result02: BusStats[] = [
-        {
-          driverName: "John Doe",
-          phoneNumber: "555-1234",
-          busId: "BUS001",
-          currentRoute: "A",
-          totalTrips: 120,
-          totalHours: 340,
-        },
-        {
-          driverName: "Alice Smith",
-          phoneNumber: "555-5678",
-          busId: "BUS002",
-          currentRoute: "B",
-          totalTrips: 98,
-          totalHours: 280,
-        },
-        {
-          driverName: null,
-          phoneNumber: null,
-          busId: "BUS003",
-          currentRoute: null,
-          totalTrips: 75,
-          totalHours: 190,
-        },
-        {
-          driverName: "Michael Brown",
-          phoneNumber: null,
-          busId: "BUS004",
-          currentRoute: "C",
-          totalTrips: 134,
-          totalHours: 400,
-        },
-        {
-          driverName: "Sophie Lee",
-          phoneNumber: "555-9999",
-          busId: "BUS005",
-          currentRoute: null,
-          totalTrips: 65,
-          totalHours: 150,
-        },
-      ];
+      const result02: BusStats[] = [];
       setData02(result02);
     }
+    async function fetchData02() {
+      const { data: buses, error } = await supabase
+        .from("buses")
+        .select("id,status,capacity,driver_id");
 
+      if (error) {
+        return null;
+      } else {
+        const { data: drivers, error } = await supabase
+          .from("drivers")
+          .select("id,full_name");
+        if (error) {
+          return null;
+        }
+        const busStatus: BusStatus[] = buses.map((bus) => {
+          const driver = drivers.find((driver) => driver.id === bus.driver_id);
+          return {
+            id: bus.id,
+            status: bus.status,
+            capacity: bus.capacity,
+            driverName: driver?.full_name,
+          };
+        });
+        setData(busStatus);
+      }
+    }
+    async function fetchData03() {
+      const { data: buses, error } = await supabase
+        .from("buses")
+        .select(
+          "id,status,capacity,driver_id,fuel_efficiency,total_mileage,layout_type,driver_id"
+        );
+      if (error) {
+        return null;
+      }
+      const { data: drivers, error: drivererror } = await supabase
+        .from("drivers")
+        .select("id,full_name,phone");
+      if (drivererror) {
+        return null;
+      }
+      const busStats: BusStats[] = buses.map((bus) => {
+        const driver = drivers?.find((driver) => driver.id === bus.driver_id);
+        return {
+          id: bus.id,
+          status: bus.status,
+          capacity: bus.capacity,
+          driverName: driver?.full_name,
+          phoneNumber: driver?.phone,
+          busId: bus.id,
+          currentRoute: null,
+          totalTrips: 0,
+          totalHours: 0,
+          totalMileage: bus.total_mileage,
+          fuelEfficiency: bus.fuel_efficiency,
+          layoutType: bus.layout_type,
+        };
+      });
+      setData02(busStats);
+      console.log(busStats);
+    }
+    fetchData02();
+    fetchData03();
     fetchData();
   }, []);
   const [selected, setSelected] = useState(1);
 
   return (
-    <div className="container mx-auto py-5 px-10">
+    <div className="container mx-auto py-5 px-5">
       <div className="flex flex-row justify-between mb-4 w-auto  ">
         <h1 className="text-3xl font-bold mb-5">Bus Management</h1>
         <Sheet>
@@ -202,9 +190,10 @@ export default function DemoPage() {
         </Sheet>
       </div>
 
-      <h1 className="text-2xl font-bold mb-2">Buses Status</h1>
-
-      <DataTable columns={columnsBusStatus} data={data} />
+      <div className="flex flex-col justify-between mb-4 w-auto px-10 ">
+        <h1 className="text-2xl font-bold mb-2">Buses Status</h1>
+        <DataTable columns={columnsBusStatus} data={data} />
+      </div>
       <h1 className="text-2xl font-bold mb-2 mt-10">Buses Current Stats</h1>
 
       <DataTable columns={columnsBusStats} data={data02} />

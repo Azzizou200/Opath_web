@@ -22,6 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { auth } from "@/lib/supabase";
+
 export function NavUser({
   user,
 }: {

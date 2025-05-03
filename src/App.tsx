@@ -5,14 +5,14 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/appsidebar";
 import { auth } from "@/lib/supabase";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-
+import { Toaster } from "./components/ui/sonner";
 // Import page components
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
+import Buses from "./pages/Buses";
 import About from "./pages/About";
-
+import Dashboard from "./pages/Dashboard";
+import Drivers from "./pages/Drivers";
+import Trips from "./pages/Trips";
+import Revenue from "./pages/Revenue";
 export default function Layout() {
   const [user, setUser] = useState<User | null>(null);
 
@@ -50,12 +50,13 @@ export default function Layout() {
         <SidebarProvider open={true}>
           <AppSidebar />
           <SidebarTrigger className="hidden" />
-
+          <Toaster />
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/buses" element={<Buses />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/drivers" element={<Drivers />} />
+            <Route path="/trips" element={<Trips />} />
+            <Route path="/revenue" element={<Revenue />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </SidebarProvider>

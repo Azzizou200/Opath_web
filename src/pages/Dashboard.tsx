@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CustomColor from "../constant/color";
 import {
   PieChart,
@@ -17,15 +17,15 @@ import {
 } from "recharts";
 import {
   Calendar,
-  Users,
   CreditCard,
   Globe,
   TrendingUp,
-  ArrowUpRight,
   Square,
   ArrowBigDown,
   ArrowBigUp,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 const COLORS = [CustomColor.success, CustomColor.fail, CustomColor.warning];
 const data02 = [
@@ -54,13 +54,6 @@ const bookingData = [
   { month: "Jul", bookings: 72, revenue: 4800 },
 ];
 
-const destinationData = [
-  { name: "Paris", bookings: 240 },
-  { name: "Bali", bookings: 195 },
-  { name: "Tokyo", bookings: 150 },
-  { name: "New York", bookings: 120 },
-  { name: "Rome", bookings: 90 },
-];
 export const Persentage = ({ value }: { value: number }) => {
   return value < 0 ? (
     <div className="flex items-center ">
@@ -74,35 +67,117 @@ export const Persentage = ({ value }: { value: number }) => {
     </div>
   );
 };
+interface routetype {
+  route_name: string;
+  number_of_trips: number;
+}
 const Dashboard: React.FC = () => {
-  const [timeRange, setTimeRange] = useState("month");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [data, setData] = useState<any[]>([]);
+  const [databookings, setData02] = useState<number>();
+  const [total_earnings, setData03] = useState<number>();
+  const [total_routes, setData04] = useState<number>();
+  const [routeData, setRouteData] = useState<routetype[]>([]);
+  useEffect(() => {
+    async function getData() {
+      const { data: drivers, error } = await supabase
+        .from("drivers")
+        .select("*");
+
+      if (error) {
+        return null;
+      } else {
+        setData(drivers);
+      }
+    }
+    async function getData02() {
+      const { data: clientbookings, error } = await supabase
+        .from("clientbookings")
+        .select("*");
+      if (error) {
+        return null;
+      } else {
+        setData02(clientbookings.length);
+      }
+    }
+    async function getData03() {
+      const { data: earnings, error } = await supabase
+        .from("trips")
+        .select("total_earnings");
+      if (error) {
+        return null;
+      } else {
+        let total_earnings = 0;
+        earnings.map((earning) => {
+          total_earnings += earning.total_earnings;
+        });
+        setData03(total_earnings);
+      }
+    }
+    async function getData04() {
+      const { data: routes, error } = await supabase.from("routes").select("*");
+      if (error) {
+        return null;
+      } else {
+        setData04(routes.length);
+      }
+    }
+    async function getData05() {
+      const { data, error } = await supabase
+        .from("routes")
+        .select(`route_name, trips(id)`); // correct select syntax
+
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn("No data returned.");
+        return;
+      }
+
+      const topRoutes = data
+        .map((route) => ({
+          route_name: route.route_name,
+          number_of_trips: route.trips?.length || 0,
+        }))
+        .filter((route) => route.number_of_trips > 0) // Only keep routes with trips
+        .sort((a, b) => b.number_of_trips - a.number_of_trips)
+        .slice(0, 5);
+
+      setRouteData(topRoutes); // make sure useState is defined above
+
+      console.log("Top Route Data:", topRoutes);
+    }
+
+    getData();
+    getData02();
+    getData03();
+    getData04();
+    getData05();
+  }, []);
 
   // Stats data
   const stats = [
     {
       title: "Total Bookings",
-      value: "1,285",
+      value: databookings,
       change: "+12.5%",
       icon: Calendar,
       color: "bg-blue-100 text-blue-600",
     },
     {
       title: "Monthly Revenue",
-      value: "$48,290",
+      value: total_earnings,
       change: "+8.3%",
       icon: CreditCard,
       color: "bg-green-100 text-green-600",
     },
-    {
-      title: "Active Customers",
-      value: "892",
-      change: "+5.7%",
-      icon: Users,
-      color: "bg-purple-100 text-purple-600",
-    },
+
     {
       title: "Destinations",
-      value: "78",
+      value: total_routes,
       change: "+3.2%",
       icon: Globe,
       color: "bg-amber-100 text-amber-600",
@@ -110,94 +185,31 @@ const Dashboard: React.FC = () => {
   ];
 
   // Upcoming tours
-  interface bookings {
-    id: string;
-    customer: string;
-    duration: string;
-    distance: string;
-    change: number;
-  }
+
   // Recent bookings
-  const recentBookings: bookings[] = [
-    {
-      id: "BK-1893",
-      customer: "Emma Wilson",
-      duration: "70h",
-      distance: "800km",
-      change: 10,
-    },
-    {
-      id: "BK-1892",
-      customer: "Michael Chen",
-      duration: "70h",
-      distance: "800km",
-      change: 10,
-    },
-    {
-      id: "BK-1891",
-      customer: "Sophie Martin",
-      duration: "70h",
-      distance: "800km",
-      change: 10,
-    },
-    {
-      id: "BK-1890",
-      customer: "James Miller",
-      duration: "70h",
-      distance: "800km",
-      change: 10,
-    },
-  ];
 
   return (
     <div className="p-6 w-full">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Travel Agency Dashboard</h1>
-        <div className="flex space-x-2">
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              timeRange === "week" ? "bg-blue-600 text-white" : "bg-gray-100"
-            }`}
-            onClick={() => setTimeRange("week")}
-          >
-            Weekly
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              timeRange === "month" ? "bg-blue-600 text-white" : "bg-gray-100"
-            }`}
-            onClick={() => setTimeRange("month")}
-          >
-            Monthly
-          </button>
-          <button
-            className={`px-3 py-1 text-sm rounded-md ${
-              timeRange === "year" ? "bg-blue-600 text-white" : "bg-gray-100"
-            }`}
-            onClick={() => setTimeRange("year")}
-          >
-            Yearly
-          </button>
-        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+            className="flex justify-between bg-white p-6 rounded-lg shadow-sm border border-gray-100"
           >
-            <div className="flex justify-between">
+            <div className="">
               <div className={`p-3 rounded-full ${stat.color}`}>
-                <stat.icon size={20} />
+                <stat.icon size={40} />
               </div>
-              <span className="flex items-center text-sm text-green-600">
-                {stat.change} <ArrowUpRight size={14} />
-              </span>
             </div>
-            <p className="text-gray-600 mt-4 text-sm">{stat.title}</p>
-            <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+            <div className="flex flex-col justify-center items-center">
+              <p className="text-gray-600 text-sm">{stat.title}</p>
+              <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+            </div>
           </div>
         ))}
       </div>
@@ -237,11 +249,12 @@ const Dashboard: React.FC = () => {
 
         {/* Popular Destinations */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Popular Destinations</h2>
+          <h2 className="text-lg font-semibold mb-4">Popular Routes</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={destinationData}
+                maxBarSize={60}
+                data={routeData}
                 margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
                 <CartesianGrid
@@ -249,11 +262,16 @@ const Dashboard: React.FC = () => {
                   horizontal={true}
                   vertical={false}
                 />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                <XAxis dataKey="route_name" tickLine={false} axisLine={false} />
                 <YAxis tickLine={false} axisLine={false} />
-                <Tooltip />
+                <Tooltip label={"Number of Trips"} />
                 <Legend />
-                <Bar dataKey="bookings" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                <Bar
+                  name={"Number of Trips"}
+                  dataKey="number_of_trips"
+                  fill="#4ade80"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -284,7 +302,7 @@ const Dashboard: React.FC = () => {
                 fill="#82ca9d"
                 label
               >
-                {data02.map((entry, index) => (
+                {data02.map((_entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -328,9 +346,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Top proforming drivers</h2>
-            <button className="text-blue-600 text-sm font-medium">
-              View All
-            </button>
+            <Link to="/drivers">View All</Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -338,23 +354,32 @@ const Dashboard: React.FC = () => {
                 <tr className="text-left text-gray-500 text-sm border-b">
                   <th className="pb-3 font-medium">ID</th>
                   <th className="pb-3 font-medium">Driver</th>
+                  <th className="pb-3 font-medium">Name</th>
                   <th className="pb-3 font-medium">Time</th>
-                  <th className="pb-3 font-medium">Distance</th>
-                  <th className="pb-3 font-medium">Change</th>
+                  <th className="pb-3 font-medium">Trips</th>
                 </tr>
               </thead>
               <tbody>
-                {recentBookings.map((booking) => (
-                  <tr key={booking.id} className="border-b border-gray-100">
-                    <td className="py-4 text-sm font-medium">{booking.id}</td>
-                    <td className="py-4 text-sm">{booking.customer}</td>
-                    <td className="py-4 text-sm">{booking.duration}</td>
-                    <td className="py-4 text-sm">{booking.distance}</td>
-                    <td className="py-4 text-sm">
-                      <Persentage value={booking.change} />
-                    </td>
-                  </tr>
-                ))}
+                {data
+                  .sort((a, b) => b.total_trips - a.total_trips)
+                  .slice(0, 4)
+                  .map((driver) => (
+                    <tr key={driver.id} className="border-b border-gray-100">
+                      <td className="py-4 text-sm font-medium">
+                        {driver.id.toString().split("").slice(0, 5)}
+                      </td>
+                      <td className="py-4 text-sm font-medium">
+                        <img
+                          src={driver.profile_picture}
+                          alt="driver"
+                          className="w-10 h-10 rounded-full"
+                        />
+                      </td>
+                      <td className="py-4 text-sm">{driver.full_name}</td>
+                      <td className="py-4 text-sm">{driver.total_hours}</td>
+                      <td className="py-4 text-sm">{driver.total_trips}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>

@@ -1,6 +1,13 @@
-import { Inbox, User, CircleDollarSign, BusFront, Link2 } from "lucide-react";
+import {
+  Inbox,
+  User,
+  CircleDollarSign,
+  BusFront,
+  Link2,
+  InfoIcon,
+} from "lucide-react";
 import { Link } from "react-router-dom";
-
+import { auth } from "@/lib/supabase";
 import {
   Sidebar,
   SidebarContent,
@@ -13,38 +20,67 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { NavUser } from "./nav-user";
-import logo from "@/assets/logo.svg";
-const data = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
+import logo from "@/assets/inverseLogo.svg";
+
+let data = {
+  name: "John Doe",
+  email: "TtC3l@example.com",
+  avatar: "https://via.placeholder.com/150",
 };
+try {
+  const res = await auth.getUser();
+
+  data = res.data.user
+    ? {
+        name: res.data.user.user_metadata?.full_name || "Unknown",
+        email: res.data.user.email || "",
+        avatar:
+          res.data.user.user_metadata?.avatar_url ||
+          "https://via.placeholder.com/150",
+      }
+    : {
+        name: "John Doe",
+        email: "TtC3l@example.com",
+        avatar: "https://via.placeholder.com/150",
+      };
+} catch {
+  data = {
+    name: "John Doe",
+    email: "TtC3l@example.com",
+    avatar: "https://via.placeholder.com/150",
+  };
+}
 // Menu items.
 const items = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/",
     icon: Inbox,
   },
   {
     title: "Buses",
-    url: "/",
+    url: "/buses",
     icon: BusFront,
   },
   {
     title: "Drivers",
-    url: "/profile",
+    url: "/drivers",
     icon: User,
   },
   {
     title: "Trips",
-    url: "/settings",
+    url: "/trips",
     icon: Link2,
   },
   {
     title: "Revenue",
-    url: "/about",
+    url: "/revenue",
     icon: CircleDollarSign,
+  },
+  {
+    title: "About",
+    url: "/about",
+    icon: InfoIcon,
   },
 ];
 
@@ -70,7 +106,7 @@ export function AppSidebar() {
         </SidebarHeader>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

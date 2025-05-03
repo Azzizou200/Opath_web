@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
 import RegisterForm from "./imageinput";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -22,38 +23,149 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import HeatMap from "@uiw/react-heat-map";
+import DriverProfileSheet from "./DriverProfileSheet";
 
-const value = [
-  { date: "2016/01/11", count: 2 },
-  ...[...Array(17)].map((_, idx) => ({
-    date: `2016/01/${idx + 10}`,
-    count: idx,
-  })),
-  ...[...Array(17)].map((_, idx) => ({
-    date: `2016/02/${idx + 10}`,
-    count: idx,
-  })),
-  { date: "2016/04/12", count: 2 },
-  { date: "2016/05/01", count: 5 },
-  { date: "2016/05/02", count: 5 },
-  { date: "2016/05/03", count: 1 },
-  { date: "2016/05/04", count: 11 },
-  { date: "2016/05/08", count: 32 },
+export type Trip = {
+  id: number;
+  route: string;
+  bus: string;
+  driver: string;
+  departure: string;
+  arrival: string;
+};
+export const columnsTrip: ColumnDef<Trip>[] = [
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Trip ID" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("id")}</div>
+    ),
+  },
+  {
+    accessorKey: "route",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Route" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("route")}</div>
+    ),
+  },
+  {
+    accessorKey: "bus",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Bus" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("bus")}</div>
+    ),
+  },
+  {
+    accessorKey: "driver",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Driver" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("driver")}</div>
+    ),
+  },
+  {
+    accessorKey: "departure",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Departure" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("departure")}</div>
+    ),
+  },
+  {
+    accessorKey: "arrival",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Arrival" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("arrival")}</div>
+    ),
+  },
 ];
-
+export type route = {
+  id: number;
+  from: string;
+  to: string;
+  numberofbuses: number;
+};
+export const columnsRoute: ColumnDef<route>[] = [
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Route ID" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("id")}</div>
+    ),
+  },
+  {
+    accessorKey: "from",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="From" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("from")}</div>
+    ),
+  },
+  {
+    accessorKey: "to",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="To" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("to")}</div>
+    ),
+  },
+  {
+    accessorKey: "numberofbuses",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Number of Trips" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("numberofbuses")}</div>
+    ),
+  },
+  {
+    id: "actions",
+    cell: () => (
+      <div className="flex flex-row justify-end">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="flex flex-row justify-end">
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0 flex flex-row justify-end"
+            >
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem className="text-blue-600">Edit</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
+  },
+];
 export type DriverStatus = {
   id: string;
   name: string;
-  status: "maintenance" | "working" | "stopped";
+  status: "maintenance" | "working" | "available";
   phoneNumber: string | null;
   currentBus: string | null;
   hours: number;
   distance: number;
   email: string;
-  route: string | null;
+
   absence: number;
 };
 export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
@@ -71,113 +183,7 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
-    cell: ({ row }) => (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost">{row.getValue("name")}</Button>
-        </SheetTrigger>
-        <SheetContent
-          side="bottom"
-          className=" py-5 pl-24 pr-10 border-4 h-full"
-        >
-          <SheetHeader className="p-0"></SheetHeader>
-          <SheetDescription></SheetDescription>
-          <div className="flex flex-row justify-between h-full">
-            <div className="flex flex-col gap-4 justify-center items-center">
-              <Avatar className="w-60 h-60 ">
-                <AvatarImage src="src\assets\OIP-2453187945.jpg" />
-                <AvatarFallback>CN</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col gap-2">
-                <h1 className="text-2xl font-bold">{row.getValue("name")}</h1>
-                <div className="flex flex-row gap-2">
-                  <h2 className="text-lg font-semibold text-zinc-500">
-                    Email:
-                  </h2>
-                  <h2 className="text-lg font-semibold ">
-                    {row.getValue("email") ?? "—"}
-                  </h2>
-                </div>
-                <div className="flex flex-row gap-2">
-                  <h2 className="text-lg font-semibold text-zinc-500">
-                    Phone:
-                  </h2>
-                  <h2 className="text-lg font-semibold ">
-                    {row.getValue("phoneNumber") ?? "—"}
-                  </h2>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4  w-2/3">
-              <div className=" bg-neutral-100 flex flex-row gap-8 items-center rounded-lg border-0 p-4">
-                <h1 className="text-2xl font-bold text-zinc-700">
-                  Bus Assigned:
-                </h1>
-                <h1 className="text-2xl font-bold">
-                  {row.getValue("currentBus") ?? "—"}
-                </h1>
-              </div>
-              <div className=" bg-neutral-100 flex flex-row gap-8 items-center rounded-lg border-0 p-4">
-                <h1 className="text-2xl font-bold text-zinc-700">
-                  Current Route:
-                </h1>
-                <h1 className="text-2xl font-bold">
-                  {row.getValue("route") ?? "—"}
-                </h1>
-              </div>
-              <div className=" bg-neutral-100 flex flex-col  rounded-lg   p-4 mb-8">
-                <div className="mb-8">
-                  <h1 className="text-2xl font-bold text-zinc-700">
-                    Contribution for this month
-                  </h1>
-                  <p className="text-sm text-zinc-500">
-                    Track the drivers work for this month
-                  </p>
-                </div>
-                <div className="flex flex-row justify-around">
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-2xl font-bold text-zinc-700">Hours:</h1>
-                    <h1 className="text-2xl font-bold">
-                      {row.getValue("hours")
-                        ? row.getValue("hours") + "h"
-                        : "—"}
-                    </h1>
-                  </div>
-
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-2xl font-bold text-zinc-700">
-                      Distance Travelled:
-                    </h1>
-                    <h1 className="text-2xl font-bold">
-                      {row.getValue("distance")
-                        ? row.getValue("distance") + "km"
-                        : "—"}
-                    </h1>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <h1 className="text-2xl font-bold text-zinc-700">
-                      Absences:
-                    </h1>
-                    <h1 className="text-2xl font-bold text-red-600">
-                      {row.getValue("absence") ?? "none"}
-                    </h1>
-                  </div>
-                </div>
-              </div>
-              <HeatMap
-                value={value}
-                width={600}
-                className="w-full h-full bg-zinc-50 rounded-lg"
-                startDate={new Date("2016/01/01")}
-              />
-            </div>
-          </div>
-          <SheetFooter>
-            <SheetClose asChild></SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-    ),
+    cell: ({ row }) => <DriverProfileSheet id={row.getValue("id") as string} />,
   },
   {
     accessorKey: "status",
@@ -190,7 +196,7 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
         {
           maintenance: "bg-yellow-100 text-yellow-800",
           working: "bg-green-100 text-green-800",
-          stopped: "bg-red-100 text-red-800",
+          available: "bg-blue-100 text-blue-800",
         }[status] || "bg-gray-100 text-gray-800";
 
       return (
@@ -249,13 +255,7 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
       );
     },
   },
-  {
-    accessorKey: "route",
-    header: () => <></>,
-    cell: () => {
-      <></>;
-    },
-  },
+
   {
     accessorKey: "distance",
     header: () => <></>,
@@ -334,7 +334,7 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
 // You can use a Zod schema here if you want.
 export type BusStatus = {
   id: string;
-  status: "maintenance" | "working" | "stopped";
+  status: "maintenance" | "available" | "stopped";
   driverName: number | null;
   capacity: number;
 };
@@ -360,7 +360,7 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
         {
           maintenance: "bg-yellow-100 text-yellow-800",
 
-          working: "bg-green-100 text-green-800",
+          available: "bg-green-100 text-green-800",
           stopped: "bg-red-100 text-red-800",
         }[status] || "bg-gray-100 text-gray-800";
 
@@ -378,13 +378,17 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
   {
     accessorKey: "driverName",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Driver ID" />
+      <DataTableColumnHeader column={column} title="Driver" />
     ),
     cell: ({ row }) => {
-      const driverId = row.getValue("driverName");
+      const driverName = row.getValue("driverName") as string | number | null;
       return (
         <div className="text-sm text-gray-700">
-          {driverId !== null ? "driverId" : "—"}
+          {driverName ? (
+            <div className="text-sm font-medium">{String(driverName)}</div>
+          ) : (
+            <div className="text-sm text-gray-400">Unassigned</div>
+          )}
         </div>
       );
     },
@@ -440,12 +444,18 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
   },
 ];
 export type BusStats = {
+  id?: string;
+  status?: string;
+  capacity?: number;
   driverName: string | null;
   phoneNumber: string | null;
   busId: string;
-  currentRoute: string | null; // "A", "B", "C", etc.
-  totalTrips: number;
-  totalHours: number;
+  currentRoute?: string | null; // "A", "B", "C", etc.
+  totalTrips?: number;
+  totalHours?: number;
+  totalMileage?: number;
+  fuelEfficiency?: number;
+  layoutType?: string;
 };
 
 export const columnsBusStats: ColumnDef<BusStats>[] = [
@@ -478,22 +488,38 @@ export const columnsBusStats: ColumnDef<BusStats>[] = [
       return <div className="text-sm text-gray-700">{phone ?? "—"}</div>;
     },
   },
+
   {
-    accessorKey: "currentRoute",
+    accessorKey: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Current Route" />
+      <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const route: string = row.getValue("currentRoute");
+      const status = row.getValue("status") as string;
+      const statusColor =
+        {
+          maintenance: "bg-yellow-100 text-yellow-800",
+          available: "bg-green-100 text-green-800",
+          stopped: "bg-red-100 text-red-800",
+        }[status] || "bg-gray-100 text-gray-800";
+
       return (
-        <div className="text-sm font-medium">
-          {route ? (
-            <div className="text-sm font-medium">{route}</div>
-          ) : (
-            <div className="text-sm text-gray-400">Unassigned</div>
-          )}
-        </div>
+        <span
+          className={`px-2 py-1 rounded text-xs font-semibold ${statusColor}`}
+        >
+          {status ? status.charAt(0).toUpperCase() + status.slice(1) : "—"}
+        </span>
       );
+    },
+  },
+  {
+    accessorKey: "capacity",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Capacity" />
+    ),
+    cell: ({ row }) => {
+      const capacity = row.getValue("capacity") as number;
+      return <div className="text-sm font-medium">{capacity ?? "—"}</div>;
     },
   },
   {
@@ -501,9 +527,10 @@ export const columnsBusStats: ColumnDef<BusStats>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Total Trips" />
     ),
-    cell: ({ row }) => (
-      <div className="text-sm font-semibold">{row.getValue("totalTrips")}</div>
-    ),
+    cell: ({ row }) => {
+      const trips = row.getValue("totalTrips") as number;
+      return <div className="text-sm font-semibold">{trips ?? "—"}</div>;
+    },
   },
   {
     accessorKey: "totalHours",
@@ -512,7 +539,39 @@ export const columnsBusStats: ColumnDef<BusStats>[] = [
     ),
     cell: ({ row }) => {
       const hours = row.getValue("totalHours") as number;
-      return <div className="text-sm">{hours} hrs</div>;
+      return <div className="text-sm">{hours ? `${hours} hrs` : "—"}</div>;
+    },
+  },
+  {
+    accessorKey: "totalMileage",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Total Mileage" />
+    ),
+    cell: ({ row }) => {
+      const mileage = row.getValue("totalMileage") as number;
+      return <div className="text-sm font-medium">{mileage ?? "—"} km</div>;
+    },
+  },
+  {
+    accessorKey: "fuelEfficiency",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Fuel Efficiency" />
+    ),
+    cell: ({ row }) => {
+      const efficiency = row.getValue("fuelEfficiency") as number;
+      return (
+        <div className="text-sm font-medium">{efficiency ?? "—"} km/L</div>
+      );
+    },
+  },
+  {
+    accessorKey: "layoutType",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Layout Type" />
+    ),
+    cell: ({ row }) => {
+      const layout = row.getValue("layoutType") as string;
+      return <div className="text-sm font-medium">{layout ?? "—"}</div>;
     },
   },
 ];
