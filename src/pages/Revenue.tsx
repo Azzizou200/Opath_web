@@ -16,7 +16,7 @@ import {
 
 const Revenue: React.FC = () => {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 w-full">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white">

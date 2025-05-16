@@ -1,16 +1,5 @@
 "use client";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 
-import RegisterForm from "./imageinput";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { DataTableColumnHeader } from "./columnheader";
@@ -21,10 +10,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 
 import DriverProfileSheet from "./DriverProfileSheet";
+
+import { DriverEditForm } from "./DriverEditForm";
+
+// Define table options meta type
+declare module "@tanstack/react-table" {
+  interface TableMeta {
+    busActions?: {
+      onDeleteBus?: (busId: string) => void;
+      onAddDriver?: (busId: string) => void;
+      onReplaceDriver?: (busId: string) => void;
+      onRemoveDriver?: (busId: string) => void;
+    };
+    onRefresh?: () => void;
+  }
+}
 
 export type Trip = {
   id: number;
@@ -95,15 +97,21 @@ export type route = {
   from: string;
   to: string;
   numberofbuses: number;
+  route_name: string;
 };
 export const columnsRoute: ColumnDef<route>[] = [
   {
     accessorKey: "id",
+    header: () => <></>,
+    cell: () => <></>,
+  },
+  {
+    accessorKey: "route_name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Route ID" />
+      <DataTableColumnHeader column={column} title="Route Name" />
     ),
     cell: ({ row }) => (
-      <div className="text-sm font-medium">{row.getValue("id")}</div>
+      <div className="text-sm font-medium">{row.getValue("route_name")}</div>
     ),
   },
   {
@@ -164,10 +172,11 @@ export type DriverStatus = {
   currentBus: string | null;
   hours: number;
   distance: number;
+  salary: number;
   email: string;
-
   absence: number;
 };
+
 export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
   {
     accessorKey: "id",
@@ -214,8 +223,8 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
       <DataTableColumnHeader column={column} title="Phone Number" />
     ),
     cell: ({ row }) => {
-      const phone: number = row.getValue("phoneNumber");
-      return <div className="text-sm text-gray-700">{phone ?? "—"}</div>;
+      const phone: string = row.getValue("phoneNumber") || "N/A";
+      return <div className="text-sm text-gray-700">{phone}</div>;
     },
   },
   {
@@ -271,60 +280,24 @@ export const columnsDriverStatus: ColumnDef<DriverStatus>[] = [
     },
   },
   {
-    id: "actions",
-    header: "Actions",
+    accessorKey: "salary",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Salary" />
+    ),
     cell: ({ row }) => {
+      const salary: string = row.getValue("salary") || "N/A";
+      return <div className="text-sm font-medium">{salary}</div>;
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row, table }) => {
       const driver = row.original;
-
+      const onRefresh = table?.options?.meta?.onRefresh;
       return (
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="outline" onClick={() => console.log(driver)}>
-              Open
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Add a driver to you fleet</SheetTitle>
-            </SheetHeader>
-            <SheetDescription></SheetDescription>
-            <div className="flex justify-center w-full items-center">
-              <RegisterForm
-                onImageSelect={(file) => {
-                  console.log("Selected file:", file);
-                  // maybe set to state, or upload, etc.
-                }}
-              />
-            </div>
-            <div className="grid gap-2 p-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" value={driver.name} />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">email</Label>
-                <Input id="email" value={driver.email} />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input id="confirm-password" />
-              </div>
-            </div>
-
-            <SheetFooter>
-              <SheetClose asChild>
-                <Button type="submit">Save changes</Button>
-              </SheetClose>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+        <div className="flex items-center gap-2">
+          <DriverEditForm driver={driver} onUpdate={onRefresh} />
+        </div>
       );
     },
   },
@@ -404,7 +377,10 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
+      const bus = row.original;
+      const busActions = table?.options?.meta?.busActions;
+
       return (
         <div className="flex flex-row justify-end">
           <DropdownMenu>
@@ -418,22 +394,34 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {row.getValue("driverName") ? (
+              {bus.driverName ? (
                 <>
-                  <DropdownMenuItem className="text-blue-600">
+                  <DropdownMenuItem
+                    className="text-blue-600"
+                    onClick={() => busActions?.onReplaceDriver?.(bus.id)}
+                  >
                     Replace Driver
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-500">
+                  <DropdownMenuItem
+                    className="text-red-500"
+                    onClick={() => busActions?.onRemoveDriver?.(bus.id)}
+                  >
                     Remove Driver
                   </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem className="text-blue-600">
+                <DropdownMenuItem
+                  className="text-blue-600"
+                  onClick={() => busActions?.onAddDriver?.(bus.id)}
+                >
                   Add Driver
                 </DropdownMenuItem>
               )}
 
-              <DropdownMenuItem className="text-red-500">
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => busActions?.onDeleteBus?.(bus.id)}
+              >
                 Remove Bus
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -572,6 +560,61 @@ export const columnsBusStats: ColumnDef<BusStats>[] = [
     cell: ({ row }) => {
       const layout = row.getValue("layoutType") as string;
       return <div className="text-sm font-medium">{layout ?? "—"}</div>;
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row, table }) => {
+      const bus = row.original;
+      const busActions = table?.options?.meta?.busActions;
+
+      return (
+        <div className="flex flex-row justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="flex flex-row justify-end">
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 flex flex-row justify-end"
+              >
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {bus.driverName ? (
+                <>
+                  <DropdownMenuItem
+                    className="text-blue-600"
+                    onClick={() => busActions?.onReplaceDriver?.(bus.busId)}
+                  >
+                    Replace Driver
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-500"
+                    onClick={() => busActions?.onRemoveDriver?.(bus.busId)}
+                  >
+                    Remove Driver
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  className="text-blue-600"
+                  onClick={() => busActions?.onAddDriver?.(bus.busId)}
+                >
+                  Add Driver
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => busActions?.onDeleteBus?.(bus.busId)}
+              >
+                Remove Bus
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
     },
   },
 ];

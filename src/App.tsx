@@ -49,7 +49,7 @@ export default function Layout() {
       ) : (
         <SidebarProvider open={true}>
           <AppSidebar />
-          <SidebarTrigger className="hidden" />
+          <SidebarTrigger className="md:hidden" />
           <Toaster />
           <Routes>
             <Route path="/buses" element={<Buses />} />

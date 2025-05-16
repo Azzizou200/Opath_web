@@ -25,23 +25,10 @@ import {
   ArrowBigUp,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase, auth } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 const COLORS = [CustomColor.success, CustomColor.fail, CustomColor.warning];
-const data02 = [
-  {
-    name: "Group A",
-    value: 2400,
-  },
-  {
-    name: "Group B",
-    value: 4567,
-  },
-  {
-    name: "Group C",
-    value: 1398,
-  },
-];
 
 // Sample data for charts
 const bookingData = [
@@ -71,6 +58,10 @@ interface routetype {
   route_name: string;
   number_of_trips: number;
 }
+interface doughnuttype {
+  name: string;
+  value: number;
+}
 const Dashboard: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any[]>([]);
@@ -78,33 +69,79 @@ const Dashboard: React.FC = () => {
   const [total_earnings, setData03] = useState<number>();
   const [total_routes, setData04] = useState<number>();
   const [routeData, setRouteData] = useState<routetype[]>([]);
+  const [doughnutData, setDoughnutData] = useState<doughnuttype[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
   useEffect(() => {
+    // Get the current logged-in user
+    async function getCurrentUser() {
+      const { data } = await auth.getUser();
+      setCurrentUser(data?.user || null);
+    }
+
+    getCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    // Only fetch data when we have the current user
+    if (!currentUser) return;
+
     async function getData() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
       const { data: drivers, error } = await supabase
         .from("drivers")
-        .select("*");
+        .select("*")
+        .eq("agent_id", agentId);
 
       if (error) {
+        console.error("Error fetching drivers:", error);
         return null;
       } else {
         setData(drivers);
       }
     }
+
     async function getData02() {
-      const { data: clientbookings, error } = await supabase
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
+      const { data: bookings, error } = await supabase
         .from("clientbookings")
-        .select("*");
+        .select("trip_id");
+
       if (error) {
+        console.error("Error fetching bookings:", error);
         return null;
-      } else {
-        setData02(clientbookings.length);
       }
+      const { data: admintrips, error: adminerror } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("agent_id", agentId);
+      if (adminerror) {
+        console.error("Error fetching trips:", adminerror);
+        return null;
+      }
+      const trips = bookings?.map((booking) => booking.trip_id);
+      const adminTrips = admintrips?.map((trip) => trip.id);
+      const totalBookings = trips?.filter((trip) =>
+        adminTrips?.includes(trip)
+      ).length;
+      setData02(totalBookings || 0);
     }
+
     async function getData03() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
       const { data: earnings, error } = await supabase
         .from("trips")
-        .select("total_earnings");
+        .select("total_earnings")
+        .eq("agent_id", agentId);
+
       if (error) {
+        console.error("Error fetching earnings:", error);
         return null;
       } else {
         let total_earnings = 0;
@@ -114,18 +151,32 @@ const Dashboard: React.FC = () => {
         setData03(total_earnings);
       }
     }
+
     async function getData04() {
-      const { data: routes, error } = await supabase.from("routes").select("*");
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
+      const { data: routes, error } = await supabase
+        .from("routes")
+        .select("*")
+        .eq("agent_id", agentId);
+
       if (error) {
+        console.error("Error fetching routes:", error);
         return null;
       } else {
         setData04(routes.length);
       }
     }
+
     async function getData05() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
       const { data, error } = await supabase
         .from("routes")
-        .select(`route_name, trips(id)`); // correct select syntax
+        .select(`route_name, trips(id)`)
+        .eq("agent_id", agentId); // Filter routes by agent_id
 
       if (error) {
         console.error("Error fetching data:", error);
@@ -151,25 +202,54 @@ const Dashboard: React.FC = () => {
       console.log("Top Route Data:", topRoutes);
     }
 
+    async function getData06() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
+      const { data: buses, error } = await supabase
+        .from("buses")
+        .select("*")
+        .eq("agent_id", agentId);
+
+      if (error) {
+        console.error("Error fetching buses:", error);
+        return null;
+      }
+
+      const available = buses.filter(
+        (bus) => bus.status === "available"
+      ).length;
+      const stopped = buses.filter((bus) => bus.status === "stopped").length;
+      const maintenance = buses.filter(
+        (bus) => bus.status === "maintenance"
+      ).length;
+      setDoughnutData([
+        { name: "Available", value: available },
+        { name: "Stopped", value: stopped },
+        { name: "Maintenance", value: maintenance },
+      ]);
+    }
+
     getData();
     getData02();
     getData03();
     getData04();
     getData05();
-  }, []);
+    getData06();
+  }, [currentUser]);
 
   // Stats data
   const stats = [
     {
       title: "Total Bookings",
-      value: databookings,
+      value: databookings || 0,
       change: "+12.5%",
       icon: Calendar,
       color: "bg-blue-100 text-blue-600",
     },
     {
       title: "Monthly Revenue",
-      value: total_earnings,
+      value: total_earnings + " DA",
       change: "+8.3%",
       icon: CreditCard,
       color: "bg-green-100 text-green-600",
@@ -284,14 +364,12 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col bg-white p-6 rounded-lg shadow-sm border border-gray-100   ">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">Bus overview</h2>
-            <button className="text-blue-600 text-sm font-medium">
-              View All
-            </button>
+            <Link to="/Buses">View All</Link>
           </div>
-          <div className="flex   justify-center items-center gap-4 ">
+          <div className="flex flex-col   justify-center items-center gap-4 ">
             <PieChart width={260} height={250}>
               <Pie
-                data={data02}
+                data={doughnutData}
                 dataKey="value"
                 nameKey="name"
                 cx="50%"
@@ -302,7 +380,7 @@ const Dashboard: React.FC = () => {
                 fill="#82ca9d"
                 label
               >
-                {data02.map((_entry, index) => (
+                {doughnutData.map((_entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={COLORS[index % COLORS.length]}
@@ -310,33 +388,33 @@ const Dashboard: React.FC = () => {
                 ))}
               </Pie>
             </PieChart>
-            <ul className="space-y-4">
-              <li className="flex items-center gap-1">
+            <ul className="space-y-4 flex flex-row justify-center items-center gap-4  ">
+              <li className="flex  items-center gap-1">
                 <Square
                   color="green"
                   fill="green"
                   className="mt-0.5"
                   size={12}
                 ></Square>
-                <p>Buses Available</p>
+                <p className="text-sm">Buses Available</p>
               </li>
               <li className="flex items-center gap-1">
                 <Square
-                  color="green"
-                  fill="green"
+                  color={COLORS[2]}
+                  fill={COLORS[2]}
                   size={12}
                   className="mt-0.5"
                 ></Square>
-                <p>Buses Available</p>
+                <p className="text-sm">Buses on Maintenance</p>
               </li>
-              <li className="flex items-center gap-1">
+              <li className="flex items-center gap-1 mb-4 ">
                 <Square
-                  color="green"
+                  color={COLORS[1]}
+                  fill={COLORS[1]}
                   className="mt-0.5"
-                  fill="green"
                   size={12}
                 ></Square>
-                <p>Buses Available</p>
+                <p className="text-sm">Buses Stopped</p>
               </li>
             </ul>
           </div>
@@ -352,7 +430,6 @@ const Dashboard: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="text-left text-gray-500 text-sm border-b">
-                  <th className="pb-3 font-medium">ID</th>
                   <th className="pb-3 font-medium">Driver</th>
                   <th className="pb-3 font-medium">Name</th>
                   <th className="pb-3 font-medium">Time</th>
@@ -365,9 +442,6 @@ const Dashboard: React.FC = () => {
                   .slice(0, 4)
                   .map((driver) => (
                     <tr key={driver.id} className="border-b border-gray-100">
-                      <td className="py-4 text-sm font-medium">
-                        {driver.id.toString().split("").slice(0, 5)}
-                      </td>
                       <td className="py-4 text-sm font-medium">
                         <img
                           src={driver.profile_picture}
