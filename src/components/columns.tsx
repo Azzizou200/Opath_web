@@ -15,6 +15,8 @@ import DriverProfileSheet from "./DriverProfileSheet";
 
 import { DriverEditForm } from "./DriverEditForm";
 
+import Routeedit from "./routeedit";
+import TripEdit from "./tripedit";
 // Define table options meta type
 declare module "@tanstack/react-table" {
   interface TableMeta {
@@ -35,16 +37,15 @@ export type Trip = {
   driver: string;
   departure: string;
   arrival: string;
+  date: string;
+  price: number;
 };
 export const columnsTrip: ColumnDef<Trip>[] = [
+
   {
     accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Trip ID" />
-    ),
-    cell: ({ row }) => (
-      <div className="text-sm font-medium">{row.getValue("id")}</div>
-    ),
+    header: () => <></>,
+    cell: () => <></>,
   },
   {
     accessorKey: "route",
@@ -53,6 +54,15 @@ export const columnsTrip: ColumnDef<Trip>[] = [
     ),
     cell: ({ row }) => (
       <div className="text-sm font-medium">{row.getValue("route")}</div>
+    ),
+  },
+  {
+    accessorKey: "date",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Date" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("date")}</div>
     ),
   },
   {
@@ -74,6 +84,15 @@ export const columnsTrip: ColumnDef<Trip>[] = [
     ),
   },
   {
+    accessorKey: "price",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Price" />
+    ),
+    cell: ({ row }) => (
+      <div className="text-sm font-medium">{row.getValue("price")}</div>
+    ),
+  },
+  {
     accessorKey: "departure",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Departure" />
@@ -90,6 +109,10 @@ export const columnsTrip: ColumnDef<Trip>[] = [
     cell: ({ row }) => (
       <div className="text-sm font-medium">{row.getValue("arrival")}</div>
     ),
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => <TripEdit id={row.original.id.toString()} />,
   },
 ];
 export type route = {
@@ -143,25 +166,7 @@ export const columnsRoute: ColumnDef<route>[] = [
   },
   {
     id: "actions",
-    cell: () => (
-      <div className="flex flex-row justify-end">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild className="flex flex-row justify-end">
-            <Button
-              variant="ghost"
-              className="h-8 w-8 p-0 flex flex-row justify-end"
-            >
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem className="text-blue-600">Edit</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
+    cell: ({ row }) => <Routeedit id={row.original.id.toString()} />,
   },
 ];
 export type DriverStatus = {

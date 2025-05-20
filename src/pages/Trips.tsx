@@ -26,6 +26,7 @@ import {
 import { MapPin, Route, Bus, Calendar, Clock, TrendingUp } from "lucide-react";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import * as geolib from "geolib";
+import { toast } from "sonner";
 
 interface Bus {
   id: string;
@@ -61,8 +62,11 @@ const Trips: React.FC = () => {
   const [newTrip, setNewTrip] = useState({
     route_id: "",
     driver_id: "",
+    bus_id: "",
+    date: "",
     start_time: "",
     end_time: "",
+    price: 0,
   });
 
   const [distance, setDistance] = useState(0);
@@ -125,7 +129,10 @@ const Trips: React.FC = () => {
 
   // Function to handle adding a new route
   const handleAddRoute = async () => {
-    if (!currentUser || !newRoute.from || !newRoute.to) return;
+    if (!currentUser || !newRoute.from || !newRoute.to) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     try {
       // Extract addresses from the location strings
@@ -141,6 +148,7 @@ const Trips: React.FC = () => {
       const toCity = toAddress.split(",")[1].trim();
       const start_street = fromAddress.split(",")[0].trim();
       const destination_street = toAddress.split(",")[0].trim();
+      
       const { error } = await supabase.from("routes").insert({
         route_name: newRoute.route_name,
         start_location: fromCity,
@@ -153,6 +161,9 @@ const Trips: React.FC = () => {
       });
 
       if (error) throw error;
+
+      // Show success message
+      toast.success("Route added successfully!");
 
       // Refresh the routes data
       fetchData();
@@ -167,7 +178,7 @@ const Trips: React.FC = () => {
       });
     } catch (error) {
       console.error("Error adding route:", error);
-      alert("Failed to add route. Please try again.");
+      toast.error("Failed to add route. Please try again.");
     }
   };
 
@@ -233,7 +244,6 @@ const Trips: React.FC = () => {
 
   // Move fetchData outside useEffect
   const fetchData = async () => {
-    // Get data for the current agent
     if (!currentUser) return null;
 
     setIsLoadingRoutes(true);
@@ -242,22 +252,22 @@ const Trips: React.FC = () => {
 
     const { data: routes, error: routesError } = await supabase
       .from("routes")
-      .select("id,route_name,start_location,destination")
+      .select("id, route_name, start_location, destination")
       .eq("agent_id", agentId);
 
     if (routesError || !routes) {
-      console.error("Error fetching routes:", routesError);
+      console.error("Error fetching routes");
       setIsLoadingRoutes(false);
       return null;
     }
 
     const { data: trips, error: tripsError } = await supabase
       .from("trips")
-      .select("id,route_id")
+      .select("id, route_id, start_time, end_time, driver_id, bus_id")
       .eq("agent_id", agentId);
 
     if (tripsError || !trips) {
-      console.error("Error fetching trips:", tripsError);
+      console.error("Error fetching trips");
       setIsLoadingRoutes(false);
       return null;
     }
@@ -267,7 +277,7 @@ const Trips: React.FC = () => {
         .map((trip) => {
           return trip.route_id === route.id ? trip : null;
         })
-        .filter(Boolean); // Filter out null values
+        .filter(Boolean);
 
       return {
         id: route.id,
@@ -284,7 +294,6 @@ const Trips: React.FC = () => {
 
   // Move fetchData02 outside useEffect
   const fetchData02 = async () => {
-    // Get data for the current agent
     if (!currentUser) return null;
 
     setIsLoadingTrips(true);
@@ -293,44 +302,44 @@ const Trips: React.FC = () => {
 
     const { data: trips, error: tripsError } = await supabase
       .from("trips")
-      .select("*")
+      .select("id, route_id, start_time, end_time, driver_id, bus_id, date, price")
       .eq("agent_id", agentId);
 
     if (tripsError || !trips) {
-      console.error("Error fetching trips:", tripsError);
+      console.error("Error fetching trips");
       setIsLoadingTrips(false);
       return null;
     }
 
     const { data: routes, error: routesError } = await supabase
       .from("routes")
-      .select("*")
+      .select("id, route_name")
       .eq("agent_id", agentId);
 
     if (routesError || !routes) {
-      console.error("Error fetching routes:", routesError);
+      console.error("Error fetching routes");
       setIsLoadingTrips(false);
       return null;
     }
 
     const { data: drivers, error: driversError } = await supabase
       .from("drivers")
-      .select("id,full_name")
+      .select("id, full_name")
       .eq("agent_id", agentId);
 
     if (driversError || !drivers) {
-      console.error("Error fetching drivers:", driversError);
+      console.error("Error fetching drivers");
       setIsLoadingTrips(false);
       return null;
     }
 
     const { data: buses, error: busesError } = await supabase
       .from("buses")
-      .select("id,status,capacity,driver_id")
+      .select("id, status, capacity, driver_id")
       .eq("agent_id", agentId);
 
     if (busesError || !buses) {
-      console.error("Error fetching buses:", busesError);
+      console.error("Error fetching buses");
       setIsLoadingTrips(false);
       return null;
     }
@@ -343,22 +352,64 @@ const Trips: React.FC = () => {
       const driver = drivers.find((driver) => driver.id === trip.driver_id);
       const bus = buses.find((bus) => bus.id === trip.bus_id);
       return {
+        price: trip.price,
         id: trip.id,
         route: route?.route_name,
         bus: bus?.id,
         driver: driver?.full_name,
         departure: trip.start_time,
         arrival: trip.end_time,
+        date: trip.date,
       };
     });
 
-    console.log(tripsData);
     setTripData(tripsData);
     setIsLoadingTrips(false);
   };
 
   // Function to handle adding a new trip
-  const handleAddTrip = async () => {};
+  const handleAddTrip = async () => {
+    if (!currentUser || !newTrip.route_id || !newTrip.driver_id) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      console.log("Adding trip:", newTrip);
+      const { error } = await supabase.from("trips").insert({
+        bus_id: newTrip.bus_id,
+        route_id: newTrip.route_id,
+        driver_id: newTrip.driver_id,
+        start_time: newTrip.start_time,
+        end_time: newTrip.end_time,
+        date: newTrip.date,
+        price: newTrip.price,
+        agent_id: currentUser.id,
+      });
+
+      if (error) throw error;
+
+      // Show success message
+      toast.success("Trip added successfully!");
+
+      // Refresh the trips data
+      fetchData02();
+
+      // Reset form
+      setNewTrip({
+        bus_id: "",
+        route_id: "",
+        driver_id: "",
+        date: "",
+        start_time: "",
+        end_time: "",
+        price: 0,
+      });
+    } catch (error) {
+      console.error("Error adding trip:", error);
+      toast.error("Failed to add trip. Please try again.");
+    }
+  };
 
   useEffect(() => {
     // Only fetch data when we have the current user
@@ -531,7 +582,7 @@ const Trips: React.FC = () => {
                   >
                     <option value="">Select a route</option>
                     {routes.map((route) => (
-                      <option key={route.id} value={route.route_name}>
+                      <option key={route.id} value={route.id}>
                         {route.route_name}
                       </option>
                     ))}
@@ -543,9 +594,15 @@ const Trips: React.FC = () => {
                   <select
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={newTrip.driver_id}
-                    onChange={(e) =>
-                      setNewTrip({ ...newTrip, driver_id: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setNewTrip({ ...newTrip, driver_id: e.target.value });
+                      const bus = buses.find(
+                        (bus) => bus.driver_id === e.target.value
+                      );
+                      if (bus) {
+                        setNewTrip({ ...newTrip, bus_id: bus.id });
+                      }
+                    }}
                   >
                     <option value="">Select a driver</option>
                     {buses
@@ -567,12 +624,12 @@ const Trips: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label>Start Time</Label>
+                  <Label>Date</Label>
                   <Input
                     type="date"
-                    value={newTrip.start_time}
+                    value={newTrip.date}
                     onChange={(e) =>
-                      setNewTrip({ ...newTrip, start_time: e.target.value })
+                      setNewTrip({ ...newTrip, date: e.target.value })
                     }
                   />
                 </div>
@@ -594,6 +651,16 @@ const Trips: React.FC = () => {
                     value={newTrip.end_time}
                     onChange={(e) =>
                       setNewTrip({ ...newTrip, end_time: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Price</Label>
+                  <Input
+                    type="number"
+                    value={newTrip.price}
+                    onChange={(e) =>
+                      setNewTrip({ ...newTrip, price: Number(e.target.value) })
                     }
                   />
                 </div>

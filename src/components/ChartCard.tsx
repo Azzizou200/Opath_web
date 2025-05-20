@@ -7,6 +7,7 @@ interface ChartCardProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   periodOptions?: string[];
+  onPeriodChange?: (period: string) => void;
 }
 
 const ChartCard: React.FC<ChartCardProps> = ({
@@ -14,10 +15,16 @@ const ChartCard: React.FC<ChartCardProps> = ({
   subtitle,
   children,
   footer,
-  periodOptions = ["7D", "30D", "3M", "1Y", "All"],
+  periodOptions = ["3M", "1Y", "All"],
+  onPeriodChange,
 }) => {
-  const [activePeriod, setActivePeriod] = useState(periodOptions[1]);
+  const [activePeriod, setActivePeriod] = useState(periodOptions[0]);
   const [showTooltip, setShowTooltip] = useState(false);
+
+  const handlePeriodChange = (period: string) => {
+    setActivePeriod(period);
+    onPeriodChange?.(period);
+  };
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-5 transition-all duration-200 hover:shadow-md">
@@ -45,32 +52,28 @@ const ChartCard: React.FC<ChartCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1 text-sm flex-grow sm:flex-grow-0">
+        {periodOptions && periodOptions.length > 0 && (
+          <div className="flex space-x-2">
             {periodOptions.map((period) => (
               <button
                 key={period}
-                className={`px-3 py-1 rounded-md transition-colors ${
+                onClick={() => handlePeriodChange(period)}
+                className={`px-3 py-1 text-sm rounded-md transition-colors ${
                   activePeriod === period
-                    ? "bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
                 }`}
-                onClick={() => setActivePeriod(period)}
               >
                 {period}
               </button>
             ))}
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="h-[280px]">{children}</div>
+      <div className="h-[300px]">{children}</div>
 
-      {footer && (
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-          {footer}
-        </div>
-      )}
+      {footer && <div className="mt-4">{footer}</div>}
     </div>
   );
 };

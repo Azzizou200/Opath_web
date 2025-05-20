@@ -41,6 +41,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // Helper function to convert base64 to Uint8Array
 
@@ -61,13 +62,13 @@ const Profile: React.FC = () => {
 
   const handleConfirm = async () => {
     if (!fullName || !phoneNumber) {
-      alert("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user) {
-      alert("Authentication error. Please login again.");
+      toast.error("Authentication error. Please login again.");
       return;
     }
 
@@ -134,18 +135,11 @@ const Profile: React.FC = () => {
       setPhoneNumber("");
       setSalary("");
       setImage(null);
+
+      toast.success("Driver added successfully!");
     } catch (error) {
       console.error("Error adding driver:", error);
-
-      if (driverId) {
-        try {
-          await supabase.from("drivers").delete().eq("id", driverId);
-        } catch (cleanupError) {
-          console.error("Error during cleanup:", cleanupError);
-        }
-      }
-
-      alert("Error adding driver. Please try again.");
+      toast.error("Failed to add driver. Please try again.");
     }
   };
 

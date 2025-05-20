@@ -65,13 +65,12 @@ interface doughnuttype {
 const Dashboard: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any[]>([]);
-  const [databookings, setData02] = useState<number>();
   const [total_earnings, setData03] = useState<number>();
   const [total_routes, setData04] = useState<number>();
   const [routeData, setRouteData] = useState<routetype[]>([]);
   const [doughnutData, setDoughnutData] = useState<doughnuttype[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-
+  const [total_bookings, setData07] = useState<number>();
   useEffect(() => {
     // Get the current logged-in user
     async function getCurrentUser() {
@@ -101,34 +100,6 @@ const Dashboard: React.FC = () => {
       } else {
         setData(drivers);
       }
-    }
-
-    async function getData02() {
-      if (!currentUser) return null;
-      const agentId = currentUser.id;
-
-      const { data: bookings, error } = await supabase
-        .from("clientbookings")
-        .select("trip_id");
-
-      if (error) {
-        console.error("Error fetching bookings:", error);
-        return null;
-      }
-      const { data: admintrips, error: adminerror } = await supabase
-        .from("trips")
-        .select("id")
-        .eq("agent_id", agentId);
-      if (adminerror) {
-        console.error("Error fetching trips:", adminerror);
-        return null;
-      }
-      const trips = bookings?.map((booking) => booking.trip_id);
-      const adminTrips = admintrips?.map((trip) => trip.id);
-      const totalBookings = trips?.filter((trip) =>
-        adminTrips?.includes(trip)
-      ).length;
-      setData02(totalBookings || 0);
     }
 
     async function getData03() {
@@ -229,20 +200,47 @@ const Dashboard: React.FC = () => {
         { name: "Maintenance", value: maintenance },
       ]);
     }
+    async function getData07() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
 
+      const { data: trips, error } = await supabase
+        .from("trips")
+        .select("id")
+        .eq("agent_id", agentId);
+      const { data: bookings, error: bookingerror } = await supabase
+        .from("clientbookings")
+        .select("seat_number")
+        .in("trip_id", trips?.map((trip) => trip.id) || []);
+      if (error) {
+        console.error("Error fetching trips:", error);
+        return null;
+      }
+      if (bookingerror) {
+        console.error("Error fetching bookings:", bookingerror);
+        return null;
+      }
+      const seat_numbers = bookings?.map((booking) => {
+        const number = booking.seat_number.split(",").length;
+        return number;
+      });
+      const totalBookings = seat_numbers?.reduce((acc, curr) => acc + curr, 0);
+      setData07(totalBookings || 0);
+    }
     getData();
-    getData02();
+
     getData03();
     getData04();
     getData05();
     getData06();
+    getData07();
   }, [currentUser]);
 
   // Stats data
   const stats = [
     {
       title: "Total Bookings",
-      value: databookings || 0,
+      value: total_bookings || 0,
       change: "+12.5%",
       icon: Calendar,
       color: "bg-blue-100 text-blue-600",
@@ -256,7 +254,7 @@ const Dashboard: React.FC = () => {
     },
 
     {
-      title: "Destinations",
+      title: "Routes",
       value: total_routes,
       change: "+3.2%",
       icon: Globe,
@@ -305,23 +303,31 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" className="p-0">
               <LineChart
                 data={bookingData}
                 margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" orientation="left" />
+                <YAxis yAxisId="right" orientation="right" />
+
                 <Tooltip />
                 <Legend />
                 <Line
                   type="monotone"
                   dataKey="bookings"
                   stroke="#3b82f6"
+                  yAxisId="left"
                   activeDot={{ r: 8 }}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#10b981" />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#10b981"
+                  yAxisId="right"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>

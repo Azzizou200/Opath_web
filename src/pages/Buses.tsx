@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/carousel";
 import { supabase, auth } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
+
 const LayoutTypes = ["A", "B", "C"];
 export default function DemoPage() {
   const [data, setData] = useState<BusStatus[]>([]);
@@ -73,17 +75,22 @@ export default function DemoPage() {
 
   async function handleDeleteBus(busId: string) {
     if (confirm(`Are you sure you want to delete bus ${busId}?`)) {
-      const { error } = await supabase
-        .from("buses")
-        .delete()
-        .eq("id", busId)
-        .eq("agent_id", currentUser?.id);
+      try {
+        const { error } = await supabase
+          .from("buses")
+          .delete()
+          .eq("id", busId)
+          .eq("agent_id", currentUser?.id);
 
-      if (error) {
-        console.error("Error deleting bus:", error);
-        alert("Failed to delete bus. Please try again.");
-      } else {
+        if (error) {
+          throw error;
+        }
+
+        toast.success(`Bus ${busId} deleted successfully`);
         setRefresh(!refresh);
+      } catch (error) {
+        console.error("Error deleting bus:", error);
+        toast.error("Failed to delete bus. Please try again.");
       }
     }
   }
@@ -116,48 +123,58 @@ export default function DemoPage() {
 
   async function handleAssignDriver() {
     if (!selectedDriverId || !driverSelectionBusId) {
-      alert("Please select a driver");
+      toast.error("Please select a driver");
       return;
     }
 
     setIsProcessingDriver(true);
 
-    const { error } = await supabase
-      .from("buses")
-      .update({ driver_id: selectedDriverId })
-      .eq("id", driverSelectionBusId)
-      .eq("agent_id", currentUser?.id);
+    try {
+      const { error } = await supabase
+        .from("buses")
+        .update({ driver_id: selectedDriverId })
+        .eq("id", driverSelectionBusId)
+        .eq("agent_id", currentUser?.id);
 
-    if (error) {
-      console.error("Error assigning driver:", error);
-      alert("Failed to assign driver. Please try again.");
-    } else {
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Driver assigned successfully");
       setShowDriverDialog(false);
       setDriverSelectionBusId(null);
       setRefresh(!refresh);
+    } catch (error) {
+      console.error("Error assigning driver:", error);
+      toast.error("Failed to assign driver. Please try again.");
+    } finally {
+      setIsProcessingDriver(false);
     }
-
-    setIsProcessingDriver(false);
   }
 
   async function handleRemoveDriver(busId: string) {
     if (confirm("Are you sure you want to remove the driver from this bus?")) {
       setIsProcessingDriver(true);
 
-      const { error } = await supabase
-        .from("buses")
-        .update({ driver_id: null })
-        .eq("id", busId)
-        .eq("agent_id", currentUser?.id);
+      try {
+        const { error } = await supabase
+          .from("buses")
+          .update({ driver_id: null })
+          .eq("id", busId)
+          .eq("agent_id", currentUser?.id);
 
-      if (error) {
-        console.error("Error removing driver:", error);
-        alert("Failed to remove driver. Please try again.");
-      } else {
+        if (error) {
+          throw error;
+        }
+
+        toast.success("Driver removed successfully");
         setRefresh(!refresh);
+      } catch (error) {
+        console.error("Error removing driver:", error);
+        toast.error("Failed to remove driver. Please try again.");
+      } finally {
+        setIsProcessingDriver(false);
       }
-
-      setIsProcessingDriver(false);
     }
   }
 
@@ -167,21 +184,31 @@ export default function DemoPage() {
     layout: string,
     fuelEfficiency: number
   ) {
-    const { data, error } = await supabase.from("buses").insert({
-      id: name,
-      agent_id: currentUser?.id,
-
-      capacity: 40,
-      layout_type: layout,
-      starting_mileage: mileage,
-      fuel_efficiency: fuelEfficiency,
-    });
-    if (error) {
-      console.error("Error inserting bus:", error);
-    } else {
-      console.log("Bus inserted successfully:", data);
+    if (!name || !layout) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-    setRefresh(!refresh);
+
+    try {
+      const { data, error } = await supabase.from("buses").insert({
+        id: name,
+        agent_id: currentUser?.id,
+
+        capacity: 40,
+        layout_type: layout,
+        starting_mileage: mileage,
+        fuel_efficiency: fuelEfficiency,
+      });
+      if (error) {
+        throw error;
+      }
+
+      toast.success(`Bus ${name} added successfully`);
+      setRefresh(!refresh);
+    } catch (error) {
+      console.error("Error inserting bus:", error);
+      toast.error("Failed to add bus. Please try again.");
+    }
   }
   useEffect(() => {
     // Get the current logged-in user

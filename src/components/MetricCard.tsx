@@ -8,6 +8,7 @@ interface MetricCardProps {
   prefix?: string;
   suffix?: string;
   icon?: React.ReactNode;
+  subtitle?: string;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -17,6 +18,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
   prefix = "",
   suffix = "",
   icon,
+  subtitle,
 }) => {
   const isPositive = change && change > 0;
   const isNegative = change && change < 0;
@@ -33,12 +35,17 @@ const MetricCard: React.FC<MetricCardProps> = ({
         )}
       </div>
 
-      <div className="flex items-baseline">
+      <div className="flex flex-col">
         <span className="text-slate-700 dark:text-slate-200 text-2xl font-semibold">
           {prefix}
           {value}
           {suffix}
         </span>
+        {subtitle && (
+          <span className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {subtitle}
+          </span>
+        )}
       </div>
 
       {change !== undefined && (

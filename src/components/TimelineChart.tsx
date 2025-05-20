@@ -104,8 +104,12 @@ const TimelineChart: React.FC<TimelineChartProps> = ({
           dataKey="name"
           axisLine={false}
           tickLine={false}
-          tick={{ fontSize: 12, fill: "#94A3B8" }}
+          tick={{ fontSize: 10, fill: "#94A3B8" }}
           dy={10}
+          interval={0}
+          angle={-45}
+          textAnchor="end"
+          height={60}
         />
 
         <YAxis

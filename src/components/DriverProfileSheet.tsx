@@ -1,14 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import HeatMap from "@uiw/react-heat-map";
-import {
-  Phone,
-  Mail,
-  Bus,
-  Clock,
-  RouteIcon,
-  CalendarDays,
-  ChevronDown,
-} from "lucide-react";
+import { Phone, Mail, Bus, Clock, RouteIcon, CalendarDays } from "lucide-react";
 
 import { Button } from "./ui/button";
 import {
@@ -17,7 +9,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "./ui/sheet";
 import { toast } from "sonner";
 import { Badge } from "./ui/badge";
@@ -152,18 +143,9 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
             <SheetTitle className="text-2xl">{driverdata?.name}</SheetTitle>
             {getStatusBadge(driverdata?.status)}
           </div>
-          <SheetClose asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full h-8 w-8"
-            >
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </SheetClose>
         </SheetHeader>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 h-full">
           {/* Left column - Profile & Contact */}
           <div className="flex flex-col gap-6 items-center md:items-start">
             <Avatar className="w-36 h-36 md:w-48 md:h-48 rounded-full border-2 border-gray-100 shadow-md">
@@ -180,7 +162,7 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex flex-col gap-3 w-full">
+            <div className="flex flex-col gap-3 w-full h-full">
               <div className="flex flex-col gap-2">
                 <p className="text-sm font-medium text-gray-500">
                   Contact Information
@@ -240,7 +222,7 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
           </div>
 
           {/* Right columns - Metrics & Data */}
-          <div className="md:col-span-2 flex flex-col gap-6">
+          <div className="md:col-span-2 flex flex-col gap-6 h-full">
             {/* Stats cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white rounded-lg border p-4 flex flex-col">
@@ -282,17 +264,18 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
             </div>
 
             {/* Activity chart */}
-            <div className="bg-white rounded-lg border p-5">
+            <div className="bg-white rounded-lg border p-5 ">
               <div className="mb-4">
                 <h3 className="text-base font-semibold">Activity Heatmap</h3>
                 <p className="text-xs text-gray-500">
                   Driver's work activity over time
                 </p>
               </div>
-              <div className="overflow-x-auto pb-2">
+              <div className="overflow-x-auto pb-2 ">
                 <HeatMap
                   value={value}
-                  width={550}
+                  width={720}
+                  height={165}
                   rectSize={15}
                   legendCellSize={15}
                   startDate={new Date("2016/01/01")}

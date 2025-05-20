@@ -51,6 +51,8 @@ export const monthlyRevenue = [
     { name: '2022', revenue: 78000, expenses: 51000, profit: 27000 },
     { name: '2023', revenue: 92000, expenses: 59000, profit: 33000 },
     { name: '2024', revenue: 107000, expenses: 68000, profit: 39000 },
+    { name: '2025', revenue: 125000, expenses: 78000, profit: 47000 },
+    { name: '2026', revenue: 145000, expenses: 89000, profit: 56000 },
   ];
   
   export const quarterlyGrowth = [
@@ -65,8 +67,6 @@ export const monthlyRevenue = [
   // Format for currency
   export const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
