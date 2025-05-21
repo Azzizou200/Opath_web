@@ -369,15 +369,58 @@ const Trips: React.FC = () => {
 
   // Function to handle adding a new trip
   const handleAddTrip = async () => {
-    if (!currentUser || !newTrip.route_id || !newTrip.driver_id) {
-      toast.error("Please fill in all required fields");
+    // Comprehensive validation
+    if (!currentUser) {
+      toast.error("You must be logged in to add a trip");
+      return;
+    }
+    
+    // Ensure we have a bus_id by finding it from the driver_id if needed
+    let finalBusId = newTrip.bus_id;
+    let busCapacity = 0;
+    
+    // Find the bus either by bus_id or driver_id
+    const selectedBus = finalBusId 
+      ? buses.find(bus => bus.id === finalBusId)
+      : newTrip.driver_id 
+        ? buses.find(bus => bus.driver_id === newTrip.driver_id)
+        : null;
+        
+    if (selectedBus) {
+      finalBusId = selectedBus.id;
+      busCapacity = selectedBus.capacity;
+      console.log("Found bus:", selectedBus);
+      console.log("Bus capacity:", busCapacity);
+    } else {
+      console.warn("No bus found for the selected driver or bus ID");
+    }
+    
+    // Check all required fields
+    const missingFields = [];
+    if (!newTrip.route_id) missingFields.push("Route");
+    if (!newTrip.driver_id) missingFields.push("Driver");
+    if (!finalBusId) missingFields.push("Bus");
+    if (!newTrip.date) missingFields.push("Date");
+    if (!newTrip.start_time) missingFields.push("Start Time");
+    if (!newTrip.end_time) missingFields.push("End Time");
+    if (newTrip.price <= 0) missingFields.push("Price");
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.join(", ")}`);
+      return;
+    }
+    
+    // Check if we have a valid capacity
+    if (busCapacity <= 0) {
+      console.error("Invalid bus capacity:", busCapacity);
+      toast.error("The selected bus has an invalid capacity. Please select a different bus.");
       return;
     }
 
     try {
-      console.log("Adding trip:", newTrip);
-      const { error } = await supabase.from("trips").insert({
-        bus_id: newTrip.bus_id,
+      // Create the trip data object
+      const tripData = {
+        bus_id: finalBusId,
         route_id: newTrip.route_id,
         driver_id: newTrip.driver_id,
         start_time: newTrip.start_time,
@@ -385,10 +428,21 @@ const Trips: React.FC = () => {
         date: newTrip.date,
         price: newTrip.price,
         agent_id: currentUser.id,
-      });
+        capacity: busCapacity, // Add the capacity from the selected bus
+      };
+      
+      // Log the complete trip data for debugging
+      console.log("Adding trip with data:", tripData);
+      
+      // Try inserting without the select first to simplify
+      const { error } = await supabase.from("trips").insert(tripData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error details:", error);
+        throw error;
+      }
 
+      console.log("Trip added successfully!");
       // Show success message
       toast.success("Trip added successfully!");
 
@@ -405,9 +459,9 @@ const Trips: React.FC = () => {
         end_time: "",
         price: 0,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding trip:", error);
-      toast.error("Failed to add trip. Please try again.");
+      toast.error(`Failed to add trip: ${error?.message || "Please try again."}`); 
     }
   };
 
@@ -595,12 +649,37 @@ const Trips: React.FC = () => {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={newTrip.driver_id}
                     onChange={(e) => {
-                      setNewTrip({ ...newTrip, driver_id: e.target.value });
-                      const bus = buses.find(
-                        (bus) => bus.driver_id === e.target.value
-                      );
+                      const selectedDriverId = e.target.value;
+                      
+                      if (!selectedDriverId) {
+                        // If no driver selected, clear both driver and bus
+                        setNewTrip(prev => ({
+                          ...prev,
+                          driver_id: "",
+                          bus_id: ""
+                        }));
+                        return;
+                      }
+                      
+                      // Find the bus associated with this driver
+                      const bus = buses.find(bus => bus.driver_id === selectedDriverId);
+                      
                       if (bus) {
-                        setNewTrip({ ...newTrip, bus_id: bus.id });
+                        console.log(`Found bus ${bus.id} for driver ${selectedDriverId}`);
+                        // Update both driver_id and bus_id in a single state update
+                        setNewTrip(prev => ({
+                          ...prev,
+                          driver_id: selectedDriverId,
+                          bus_id: bus.id
+                        }));
+                      } else {
+                        console.warn(`No bus found for driver ${selectedDriverId}`);
+                        // Set driver_id but clear bus_id
+                        setNewTrip(prev => ({
+                          ...prev,
+                          driver_id: selectedDriverId,
+                          bus_id: ""
+                        }));
                       }
                     }}
                   >
@@ -621,6 +700,16 @@ const Trips: React.FC = () => {
                         );
                       })}
                   </select>
+                  {newTrip.bus_id && (
+                    <div className="mt-1 text-sm text-green-600">
+                      Selected Bus ID: {newTrip.bus_id}
+                    </div>
+                  )}
+                  {newTrip.driver_id && !newTrip.bus_id && (
+                    <div className="mt-1 text-sm text-red-600">
+                      Warning: No bus associated with this driver
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
