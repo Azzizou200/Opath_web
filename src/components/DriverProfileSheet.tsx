@@ -175,7 +175,7 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
           <div className="flex flex-col gap-6 items-center md:items-start">
             <Avatar className="w-36 h-36 md:w-48 md:h-48 rounded-full border-2 border-gray-100 shadow-md">
               <AvatarImage
-                className="rounded-full "
+                className="rounded-full w-full h-full object-cover"
                 src={driverdata?.image ?? "/src/assets/OIP-2453187945.jpg"}
                 alt={driverdata?.name || "Driver"}
               />
