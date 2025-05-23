@@ -1,7 +1,8 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import HeatMap from "@uiw/react-heat-map";
+import  Tooltip  from "@uiw/react-tooltip";
 import { Phone, Mail, Bus, Clock, RouteIcon, CalendarDays } from "lucide-react";
-
+import React from "react";
 import { Button } from "./ui/button";
 import {
   Sheet,
@@ -21,23 +22,6 @@ function copyToClipboard(text: string) {
   toast.success("Copied to clipboard");
 }
 
-const value = [
-  { date: "2016/01/11", count: 2 },
-  ...[...Array(17)].map((_, idx) => ({
-    date: `2016/01/${idx + 10}`,
-    count: idx,
-  })),
-  ...[...Array(17)].map((_, idx) => ({
-    date: `2016/02/${idx + 10}`,
-    count: idx,
-  })),
-  { date: "2016/04/12", count: 2 },
-  { date: "2016/05/01", count: 5 },
-  { date: "2016/05/02", count: 5 },
-  { date: "2016/05/03", count: 1 },
-  { date: "2016/05/04", count: 11 },
-  { date: "2016/05/08", count: 32 },
-];
 
 interface DriverProfileSheetProps {
   id: string;
@@ -57,7 +41,7 @@ interface DriverStatus {
 }
 interface DriverHours {
   date: string;
-  hours: number;
+  count: number;
 }
 function DriverProfileSheet({ id }: DriverProfileSheetProps) {
   const [driverdata, setDriverData] = useState<DriverStatus>();
@@ -120,8 +104,8 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
         return null;
       } else {
         const driverHoursData: DriverHours[] = driverHours.map((hour) => ({
-          date: hour.date,
-          hours: hour.work_hour,
+          date: hour.date.replace("-", "/").replace("-", "/"),
+          count: (hour.work_hour  || 0),
         }));
         console.log(driverHoursData);
         setDriverHours(driverHoursData);
@@ -297,13 +281,22 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
                 </p>
               </div>
               <div className="overflow-x-auto pb-2 ">
-                <HeatMap
-                  value={value}
+                {driverHours?.length>0?(<HeatMap
+                  value={driverHours || []}
                   width={720}
                   height={165}
                   rectSize={15}
                   legendCellSize={15}
-                  startDate={new Date("2016/01/01")}
+                  startDate={new Date()}
+                  rectRender={(props, data) => {
+                    // if (!data.count) return <rect {...props} />;
+                    return (
+                      <Tooltip  placement="top" content={`count: ${data.count || 0}`} trigger="hover">
+                        <rect {...props} />
+                      </Tooltip>
+                    );
+                  }}
+            
                   rectProps={{
                     rx: 2,
                     strokeWidth: 0,
@@ -312,7 +305,7 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
                     <rect {...props} rx={2} strokeWidth={0} />
                   )}
                   className="min-w-[500px]"
-                />
+                />):<h1>No data available</h1>}
               </div>
             </div>
           </div>
