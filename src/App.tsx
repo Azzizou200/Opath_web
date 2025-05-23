@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Login from "./Login";
+import Signup from "./Signup";
 import type { User } from "@supabase/supabase-js";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/appsidebar";
@@ -45,7 +46,10 @@ export default function Layout() {
   return (
     <Router>
       {!user ? (
-        <Login onLogin={setUser} />
+        <Routes>
+          <Route path="/signup" element={<Signup onSignup={setUser} />} />
+          <Route path="*" element={<Login onLogin={setUser} />} />
+        </Routes>
       ) : (
         <SidebarProvider open={true}>
           <AppSidebar />

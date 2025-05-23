@@ -16,6 +16,13 @@ export const auth = {
   },
 
   /**
+   * Sign up with email and password
+   */
+  signUp: async ({ email, password }: { email: string; password: string }) => {
+    return await supabase.auth.signUp({ email, password });
+  },
+
+  /**
    * Sign out the current user
    */
   signOut: async () => {

@@ -55,11 +55,14 @@ interface DriverStatus {
   absences: number | null;
   image: string | null;
 }
-
+interface DriverHours {
+  date: string;
+  hours: number;
+}
 function DriverProfileSheet({ id }: DriverProfileSheetProps) {
   const [driverdata, setDriverData] = useState<DriverStatus>();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-
+  const [driverHours, setDriverHours] = useState<DriverHours[]>([]);
   useEffect(() => {
     // Get the current logged-in user
     async function getCurrentUser() {
@@ -103,8 +106,30 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
         setDriverData(driverStatus);
       }
     }
+    async function fetchDriverHours() {
+      if (!currentUser) return null;
+  
+
+      const { data: driverHours, error } = await supabase
+        .from("driver_hours")
+        .select("*")
+        .eq("driver_id", id);
+
+      if (error || !driverHours ) {
+        console.error("Error fetching driver hours:", error);
+        return null;
+      } else {
+        const driverHoursData: DriverHours[] = driverHours.map((hour) => ({
+          date: hour.date,
+          hours: hour.work_hour,
+        }));
+        console.log(driverHoursData);
+        setDriverHours(driverHoursData);
+      }
+    }
 
     fetchData();
+    fetchDriverHours();
   }, [id, currentUser]);
 
   // Helper for status badge
@@ -145,12 +170,12 @@ function DriverProfileSheet({ id }: DriverProfileSheetProps) {
           </div>
         </SheetHeader>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 h-full">
+        <div className="mt-10  grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 h-full">
           {/* Left column - Profile & Contact */}
           <div className="flex flex-col gap-6 items-center md:items-start">
             <Avatar className="w-36 h-36 md:w-48 md:h-48 rounded-full border-2 border-gray-100 shadow-md">
               <AvatarImage
-                className="rounded-full object-cover"
+                className="rounded-full "
                 src={driverdata?.image ?? "/src/assets/OIP-2453187945.jpg"}
                 alt={driverdata?.name || "Driver"}
               />
