@@ -55,7 +55,9 @@ const Profile: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [activationCode, setActivationCode] = useState("");
-
+  const [email,setEmail]=useState("")
+ //print in the console something
+  console.log("lets get started")
   const generateActivationCode = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
@@ -92,11 +94,18 @@ const Profile: React.FC = () => {
             salary: salary,
             activation_code: code,
             is_active: false,
+            email:email
           },
         ])
         .select();
 
       if (driverError) throw driverError;
+     
+      
+         
+
+
+
 
       // Get the id of the driver we just created
       driverId = driverData[0].id;
@@ -125,6 +134,24 @@ const Profile: React.FC = () => {
           .eq("id", driverId);
 
         if (updateError) throw updateError;
+      }
+
+      // Send activation code to email if provided
+      if (email) {
+        try {
+             const {error: emailError} =   await supabase.functions.invoke("send-activation-email", {
+            body: {
+              to: email,
+              subject: "Your Opath Driver Activation Code",
+              driverName: fullName,
+              activationCode: code
+            }
+          });
+        } catch (emailError) {
+          console.error("Error sending activation code:",   emailError);
+          toast.error("Failed to send activation code. Please try again.");
+          return;
+        }
       }
 
       // Show the activation code modal
@@ -296,7 +323,15 @@ const Profile: React.FC = () => {
                   required
                 />
               </div>
-
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">Email</Label>
+                <Input
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
