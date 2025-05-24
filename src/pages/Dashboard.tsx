@@ -4,9 +4,7 @@ import {
   PieChart,
   Pie,
   BarChart,
-  LineChart,
   Bar,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -27,19 +25,13 @@ import {
 import { Link } from "react-router-dom";
 import { supabase, auth } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import TimelineChart from "../components/TimelineChart";
+import { formatCurrency } from "../data/revenueData";
 
 const COLORS = [CustomColor.success, CustomColor.fail, CustomColor.warning];
 
 // Sample data for charts
-const bookingData = [
-  { month: "Jan", bookings: 65, revenue: 4000 },
-  { month: "Feb", bookings: 59, revenue: 3800 },
-  { month: "Mar", bookings: 80, revenue: 5200 },
-  { month: "Apr", bookings: 81, revenue: 5100 },
-  { month: "May", bookings: 56, revenue: 3700 },
-  { month: "Jun", bookings: 55, revenue: 3500 },
-  { month: "Jul", bookings: 72, revenue: 4800 },
-];
+
 
 export const Persentage = ({ value }: { value: number }) => {
   return value < 0 ? (
@@ -71,6 +63,7 @@ const Dashboard: React.FC = () => {
   const [doughnutData, setDoughnutData] = useState<doughnuttype[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [total_bookings, setData07] = useState<number>();
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
   useEffect(() => {
     // Get the current logged-in user
     async function getCurrentUser() {
@@ -107,19 +100,18 @@ const Dashboard: React.FC = () => {
       const agentId = currentUser.id;
 
       const { data: earnings, error } = await supabase
-        .from("trips")
-        .select("total_earnings")
-        .eq("agent_id", agentId);
+        .from("finance")
+        .select("net_income")
+        .eq("admin_id", agentId)
+        .order("month", { ascending: true })
+        .limit(1);
 
       if (error) {
         console.error("Error fetching earnings:", error);
         return null;
       } else {
-        let total_earnings = 0;
-        earnings.map((earning) => {
-          total_earnings += earning.total_earnings;
-        });
-        setData03(total_earnings);
+        console.log("Earnings data:", earnings);
+        setData03(earnings?.[0]?.net_income || 0);
       }
     }
 
@@ -227,6 +219,39 @@ const Dashboard: React.FC = () => {
       const totalBookings = seat_numbers?.reduce((acc, curr) => acc + curr, 0);
       setData07(totalBookings || 0);
     }
+    async function fetchRevenueData() {
+      if (!currentUser) return null;
+      const agentId = currentUser.id;
+
+      const { data, error } = await supabase
+        .from("finance")
+        .select("*")
+        .eq("admin_id", agentId)
+        .order("month", { ascending: true })
+        .limit(24);
+
+      if (error) {
+        console.error("Error fetching revenue:", error);
+        return null;
+      } else {
+        console.log("Raw revenue data from database:", data);
+
+        // Transform data for monthly charts
+        const monthlyChartData =
+          data?.map((item) => ({
+            name: new Date(item.month).toLocaleString("default", {
+              month: "short",
+            }),
+            revenue: item.net_income,
+            profit: item.net_profit,
+            expenses: item.net_cost,
+          })) || [];
+        
+        console.log("Transformed monthly data:", monthlyChartData);
+        setMonthlyData(monthlyChartData);
+      }
+    }
+
     getData();
 
     getData03();
@@ -234,6 +259,7 @@ const Dashboard: React.FC = () => {
     getData05();
     getData06();
     getData07();
+    fetchRevenueData();
   }, [currentUser]);
 
   // Stats data
@@ -297,38 +323,20 @@ const Dashboard: React.FC = () => {
         {/* Booking Trend Chart */}
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Booking Trends</h2>
+            <h2 className="text-lg font-semibold">Revenue Trends</h2>
             <div className="flex items-center text-sm text-green-600">
-              <TrendingUp size={16} className="mr-1" /> 12.5% increase
+              <TrendingUp size={16} className="mr-1" /> Monthly overview
             </div>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%" className="p-0">
-              <LineChart
-                data={bookingData}
-                margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" orientation="left" />
-                <YAxis yAxisId="right" orientation="right" />
-
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="bookings"
-                  stroke="#3b82f6"
-                  yAxisId="left"
-                  activeDot={{ r: 8 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#10b981"
-                  yAxisId="right"
-                />
-              </LineChart>
+              <TimelineChart
+                data={monthlyData}
+                dataKey="revenue"
+                stroke="#2563EB"
+                fill="#2563EB"
+                formatter={formatCurrency}
+              />
             </ResponsiveContainer>
           </div>
         </div>

@@ -415,20 +415,22 @@ export const columnsBusStatus: ColumnDef<BusStatus>[] = [
                   </DropdownMenuItem>
                 </>
               ) : (
+                <>
                 <DropdownMenuItem
                   className="text-blue-600"
                   onClick={() => busActions?.onAddDriver?.(bus.id)}
                 >
                   Add Driver
                 </DropdownMenuItem>
-              )}
-
               <DropdownMenuItem
                 className="text-red-500"
                 onClick={() => busActions?.onDeleteBus?.(bus.id)}
               >
                 Remove Bus
               </DropdownMenuItem>
+                </>
+              )}
+
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

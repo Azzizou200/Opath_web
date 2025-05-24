@@ -76,6 +76,7 @@ export default function DemoPage() {
   async function handleDeleteBus(busId: string) {
     if (confirm(`Are you sure you want to delete bus ${busId}?`)) {
       try {
+        
         const { error } = await supabase
           .from("buses")
           .delete()
@@ -90,7 +91,9 @@ export default function DemoPage() {
         setRefresh(!refresh);
       } catch (error) {
         console.error("Error deleting bus:", error);
-        toast.error("Failed to delete bus. Please try again.");
+        toast.error("Bus has trips planned")
+        
+       
       }
     }
   }
@@ -493,36 +496,50 @@ export default function DemoPage() {
           ) : availableDrivers.length > 0 ? (
             <div className="py-4 space-y-4">
               {/* Search input */}
-              <div className="relative">
+              <div className="relative mb-4">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Search drivers..."
-                  className="pl-8"
+                  className="pl-8 w-full border-slate-200 focus:border-primary"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
               {filteredDrivers.length > 0 ? (
-                <Select
-                  value={selectedDriverId}
-                  onValueChange={setSelectedDriverId}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a driver" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Available Drivers</SelectLabel>
-                      {filteredDrivers.map((driver) => (
-                        <SelectItem key={driver.id} value={driver.id}>
-                          {driver.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-4">
+                  <div className="text-sm font-medium text-slate-500 mb-2">Select a driver to assign</div>
+                  <div className="grid gap-2 max-h-[300px] overflow-y-auto pr-1">
+                    {filteredDrivers.map((driver) => (
+                      <div
+                        key={driver.id}
+                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedDriverId === driver.id 
+                            ? "bg-primary/10 border border-primary" 
+                            : "bg-slate-50 hover:bg-slate-100 border border-slate-200"
+                        }`}
+                        onClick={() => setSelectedDriverId(driver.id)}
+                      >
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                          {driver.full_name.split(" ").map(name => name[0]).join("").toUpperCase()}
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <p className="text-sm font-medium">{driver.full_name}</p>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {selectedDriverId === driver.id && (
+                            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <p className="text-center text-sm text-muted-foreground">
                   No drivers found matching "{searchTerm}"
