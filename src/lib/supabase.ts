@@ -1,8 +1,8 @@
 import { createClient, SupabaseClient, User } from "@supabase/supabase-js";
 
 // Create a single supabase client for the entire app
-const supabaseUrl = "https://ykkipspaahuvemajqobx.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlra2lwc3BhYWh1dmVtYWpxb2J4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg3MTg0OTAsImV4cCI6MjA1NDI5NDQ5MH0.noxTUdZMwIdMTOb6_6H-BRzK_-mTw99dtDGBjf2-ZAs";
+const supabaseUrl = "";
+const supabaseKey = "";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
